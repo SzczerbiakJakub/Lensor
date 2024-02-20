@@ -213,6 +213,7 @@ class GraphicSketch(Sketch):
             keys = list(self.resulting_points.keys())
             print(f"{x+1}: {keys[x]} : {self.resulting_points[keys[x]]}")
 
+
     def toggle_type(self):
         focal = self.lens.focal * -1
         pos = self.lens.pos
@@ -223,6 +224,7 @@ class GraphicSketch(Sketch):
         self.lens = self.create_lens(focal, pos, space)
         obj.lens_toggle_render(self)
 
+
     def unhide_all_rays(self):
         for point in self.points:
             obj.Point.unhide_rays(point, self)
@@ -230,14 +232,14 @@ class GraphicSketch(Sketch):
 
 
     @staticmethod
-    def create_shape(self):
-        shape = obj.Shape(None, None, GraphicSketch.shape_initial_points, self)
+    def create_shape(sketch):
+        shape = obj.Shape(None, None, GraphicSketch.shape_initial_points, sketch)
         GraphicSketch.shape_initial_points.clear()
         obj.Shape.initial_points = []
         print(f"SHAPE CREATED, length: {len(shape.points)}")
-        self.create_shape_button.config(bg="white")
-        self.master.unbind("<Return>")
-        self.building_shape = False
+        sketch.create_shape_button.config(bg="white")
+        sketch.master.unbind("<Return>")
+        sketch.building_shape = False
 
 
 

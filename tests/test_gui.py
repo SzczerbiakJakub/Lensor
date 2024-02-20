@@ -134,57 +134,44 @@ def test_new_point(get_graphic_sketch):
     assert len(graphic_sketch.resulting_points) == 3
 
 
-"""
-@pytest.mark.parametrize("graphic_sketch", [
-    graphic_sketch
-])
-def test_check_point_presence(graphic_sketch):
+
+def test_check_point_presence(get_graphic_sketch):
+    graphic_sketch = get_graphic_sketch
     graphic_sketch.new_point(100, 200)
     assert graphic_sketch.check_point_presence(100, 100) == False
     assert graphic_sketch.check_point_presence(100, 200) == True
 
 
-@pytest.mark.parametrize("graphic_sketch", [
-    graphic_sketch
-])
-def test_cursor_over_point(graphic_sketch):
+def test_cursor_over_point(get_graphic_sketch):
+    graphic_sketch = get_graphic_sketch
     point = graphic_sketch.new_point(100, 200)
     graphic_sketch.cursor_over_point(point)
     assert gui.GraphicSketch.processed_point == point
 
 
-@pytest.mark.parametrize("graphic_sketch", [
-    graphic_sketch
-])
-def test_cursor_left_point(graphic_sketch):
+def test_cursor_left_point(get_graphic_sketch):
+    graphic_sketch = get_graphic_sketch
     graphic_sketch.cursor_left_point()
     assert gui.GraphicSketch.processed_point == None
 
 
-@pytest.mark.parametrize("graphic_sketch", [
-    graphic_sketch
-])
-def test_build_shape(graphic_sketch):
+def test_build_shape(get_graphic_sketch):
+    graphic_sketch = get_graphic_sketch
     graphic_sketch.build_shape()
     assert graphic_sketch.create_shape_button.cget("bg") == "red"
     assert graphic_sketch.building_shape == True
 
 
-@pytest.mark.parametrize("graphic_sketch", [
-    graphic_sketch
-]
-)
-def test_clear_sketch(graphic_sketch):
+def test_clear_sketch(get_graphic_sketch):
+    graphic_sketch = get_graphic_sketch
     graphic_sketch.clear_sketch()
     assert len(graphic_sketch.points) == 0
     assert len(graphic_sketch.resulting_points) == 0
     assert len(graphic_sketch.shapes) == 0
 
-@pytest.mark.parametrize("graphic_sketch", [
-    graphic_sketch
-]
-)
-def test_delete_point(graphic_sketch):
+
+def test_delete_point(get_graphic_sketch):
+    graphic_sketch = get_graphic_sketch
     point = graphic_sketch.new_point(100, 100)
     assert len(graphic_sketch.points) == 1
     assert len(graphic_sketch.resulting_points) == 1
@@ -192,13 +179,17 @@ def test_delete_point(graphic_sketch):
     assert len(graphic_sketch.points) == 0
     assert len(graphic_sketch.resulting_points) == 0
 
-@pytest.mark.parametrize("graphic_sketch", [
-    graphic_sketch
-]
-)
-def test_hide_all_rays(graphic_sketch):
+
+def test_hide_all_rays(get_graphic_sketch):
+    graphic_sketch = get_graphic_sketch
     point_1 = graphic_sketch.new_point(100, 100)
     point_2 = graphic_sketch.new_point(100, 200)
     graphic_sketch.hide_all_rays()
     assert point_1.show_rays == False
-    assert point_2.show_rays == False"""
+    assert point_2.show_rays == False
+
+def test_create_shape(get_graphic_sketch):
+    graphic_sketch = get_graphic_sketch
+    gui.GraphicSketch.create_shape(graphic_sketch)
+    assert graphic_sketch.create_shape_button.cget("bg") == "white"
+    assert graphic_sketch.building_shape is False
