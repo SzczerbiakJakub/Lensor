@@ -2,6 +2,7 @@ import numpy as np
 from PIL import ImageTk, Image
 import tkinter as tk
 import algorithm as alg
+#import algorithm as alg
 
 
 def lens_toggle_render(sketch):
@@ -537,12 +538,14 @@ class Point(Object):
 
     @staticmethod
     def hide_rays(point, sketch):
+        point.show_rays = False
         for main_ray in point.rays:
             for ray in main_ray:
                 sketch.canv.itemconfig(ray.img_id, fill="white")
             
     @staticmethod
     def unhide_rays(point, sketch):
+        point.show_rays = True
         for main_ray in point.rays:
             for ray in main_ray:
                 if ray.type == "re":
@@ -554,10 +557,8 @@ class Point(Object):
     def toggle_rays(point, sketch):
         if point.show_rays:
             Point.hide_rays(point, sketch)
-            point.show_rays = False
         else:
             Point.unhide_rays(point, sketch)
-            point.show_rays = True
 
 
     @staticmethod
@@ -1081,7 +1082,9 @@ class NumericDistanceLabel():
         self.y = y
         self.value = value
         self.distance = NumericDistance(object_1.x, object_2.x, y, sketch)
-        self.text = NumericText(object_1.x, object_2.x, y, f"{ "%.1f" % value}", sketch)
+        
+        #self.text = NumericText(object_1.x, object_2.x, y, f"{ "%.1f" % value}", sketch)
+        self.text = NumericText(object_1.x, object_2.x, y, f"{value:0,.1f}", sketch)
         self.bind_select_option(sketch)
 
     def __del__(self):
@@ -1353,9 +1356,11 @@ class NumericPoint(NumericObject):
         entry = tk.Entry(master=frame, width=5,  bd=3)
         entry.pack()
         if self.x > lens.x:
-            entry.insert(0, f"{self.parameters_per_lens[lens]["s'"]}")
+            value = str(self.parameters_per_lens[lens]["s'"])
+            entry.insert(0, value)
         else:
-            entry.insert(0, f"{self.parameters_per_lens[lens]["s"]}")
+            value = str(self.parameters_per_lens[lens]["s"])
+            entry.insert(0, value)
         window = sketch.canv.create_window((self.x+sketch.lens.x)/2, self.distance_label.y, window=frame)
         entry.bind("<FocusIn>", lambda event: temp_text(event, entry))
         entry.bind("<Return>", lambda event: self.process_distance_entry_value(entry, sketch, window))
@@ -1511,9 +1516,11 @@ class NumericAperture(NumericObject):
         entry = tk.Entry(master=frame, width=5,  bd=3)
         entry.pack()
         if self.x > lens.x:
-            entry.insert(0, f"{self.parameters_per_lens[lens]["s'"]}")
+            value = str(self.parameters_per_lens[lens]["s'"])
+            entry.insert(0, value)
         else:
-            entry.insert(0, f"{self.parameters_per_lens[lens]["s"]}")
+            value = str(self.parameters_per_lens[lens]["s"])
+            entry.insert(0, value)
         window = sketch.canv.create_window((self.x+sketch.lens.x)/2, self.distance_label.y, window=frame)
         entry.bind("<FocusIn>", lambda event: temp_text(event, entry))
         entry.bind("<Return>", lambda event: self.process_distance_entry_value(entry, sketch, window))
@@ -1906,9 +1913,11 @@ class NumericLensObject2(NumericObject):
         entry = tk.Entry(master=frame, width=5,  bd=3)
         entry.pack()
         if self.x > lens.x:
-            entry.insert(0, f"{self.parameters_per_lens[lens]["s'"]}")
+            value = str(self.parameters_per_lens[lens]["s'"])
+            entry.insert(0, value)
         else:
-            entry.insert(0, f"{self.parameters_per_lens[lens]["s"]}")
+            value = str(self.parameters_per_lens[lens]["s"])
+            entry.insert(0, value)
         window = sketch.canv.create_window((self.x+sketch.lens.x)/2, self.distance_label.y, window=frame)
         entry.bind("<FocusIn>", lambda event: temp_text(event, entry))
         entry.bind("<Return>", lambda event: self.process_distance_entry_value(entry, sketch, window))

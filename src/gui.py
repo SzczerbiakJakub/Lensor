@@ -1,7 +1,9 @@
 import tkinter as tk
-from tkinter import messagebox
 import object as obj
+#import object as obj
+#import object as obj
 import algorithm as alg
+#import algorithm as alg
 
 
 class MainWindow:
@@ -9,6 +11,7 @@ class MainWindow:
     def __init__(self):
         self.root = tk.Tk()
         self.root.title("Lensor")
+        self.sketch = None
 
         self.new_graphic_button = tk.Button(self.root, text="New graphic method project", command=self.create_graphic_project)
         self.new_graphic_button.pack(pady=20)
@@ -26,6 +29,7 @@ class MainWindow:
 
     def destroy_starting_buttons(self):
         self.new_graphic_button.destroy()
+        print(self.new_graphic_button)
         self.new_numeric_button.destroy()
         self.open_graphic_button.destroy()
         self.open_numeric_button.destroy()
@@ -35,14 +39,12 @@ class MainWindow:
     def create_graphic_project(self):
         self.destroy_starting_buttons()
         self.root.geometry("1000x500")
-        #self.frame = tk.Frame(master=self.root, width=1000, height=500, highlightbackground="black", highlightthickness=2, background="white").pack()
         self.sketch = GraphicSketch(self.root)
 
 
     def create_numeric_project(self):
         self.destroy_starting_buttons()
         self.root.geometry("1000x500")
-        #self.frame = tk.Frame(master=self.root, width=1000, height=500, highlightbackground="black", highlightthickness=2, background="white").pack()
         self.sketch = NumericSketch(self.root)
 
     def open_graphic_project(self):
@@ -87,14 +89,11 @@ class Sketch:
         self.canv = tk.Canvas(master=master, width=800, height=400, highlightbackground="black", highlightthickness=2, background="white")
         self.canv.pack(padx=100, pady=50)
         self.canv.bind('<Enter><Button-3>', Mouse.mouse_motion)
-        #self.canv.bind('<Enter><ButtonRelease-1>', Mouse.mouse_motion)
         self.axis = self.create_axis()
-        #self.lens = obj.Lens(self.canv)
         
 
 
     def create_axis(self):
-        #return self.canv.create_line(100,200,700,200, fill="grey", width=3)
         return obj.Axis(self, 0, 200, 800, 200)
 
 
@@ -124,8 +123,6 @@ class GraphicSketch(Sketch):
         self.hide_all_rays_button.place(x=215,y=5)
         self.unhide_all_rays_button = tk.Button(master=master, text="Unhide all rays", command=self.unhide_all_rays)
         self.unhide_all_rays_button.place(x=300,y=5)
-        #self.delete_points_button = tk.Button(master=master, text="Delete points", command=self.delete_points)
-        #self.delete_points_button.place(x=400,y=5)
         self.canv.bind('<ButtonRelease-3>', self.create_point)
         self.points = []
         self.resulting_points = {}
@@ -135,12 +132,6 @@ class GraphicSketch(Sketch):
 
 
     def create_lens(self, focal = 100, pos = 400, space = 30):
-        """
-        space = 30
-        lens = (self.canv.create_line(385,10,385,390, fill="black", width=2),
-                self.canv.create_line(385+space,10,385+space,390, fill="black", width=2))
-        return lens
-        """
         return obj.GraphicLens(self, focal, pos, space)
     
     def check_point_presence(self, x, y):
@@ -158,8 +149,7 @@ class GraphicSketch(Sketch):
         point_presence = self.check_point_presence(event.x, event.y)
         if point_presence is False:
             GraphicSketch.points_coords.append((event.x, event.y))
-            point = obj.Point(event.x, event.y, self)
-            #point.place(self, event.x, event.y)
+            point = self.new_point(event.x, event.y)
             if self.building_shape:
                 GraphicSketch.shape_initial_points.append(point)
                 obj.Shape.initial_points.append(point)
@@ -171,31 +161,19 @@ class GraphicSketch(Sketch):
             for x in self.points:
                 print(x)
 
-        """
-        GraphicSketch.points_coords.append((event.x, event.y))
-        point = obj.Point(event.x, event.y, self)
-        #point.place(self, event.x, event.y)
-        if self.building_shape:
-            GraphicSketch.shape_initial_points.append(point)
-            obj.Shape.initial_points.append(point)
-            
-        for x in range (0, len(self.points)):
-            print(f"{x+1}. {self.points[x]}: {self.points[x].x}x{self.points[x].y}, {event.x}x{event.y} -> {self.points[x].its_image_point}, ")
-        """
+    def new_point(self, x, y):
+        return obj.Point(x, y, self)
 
 
     def cursor_over_point(self, point: obj.Point):
         self.canv.unbind("<ButtonRelease-3>")
-        #self.canv.bind('<ButtonRelease-3>', lambda event: self.delete_point(point))
         print(f"CURSOR OVER POINT OF ID {point.point_img}")
-        #if GraphicSketch.deleting_point_mode:
-            #self.canv.bind('<ButtonRelease-3>', lambda event: self.delete_point(point))
         GraphicSketch.processed_point = point
         
     def cursor_left_point(self):
-        #self.canv.unbind("<ButtonRelease-3>")
         self.canv.bind('<ButtonRelease-3>', self.create_point)
         print("CURSOR LEFT THE POINT")
+        GraphicSketch.processed_point = None
 
 
     def build_shape(self):
@@ -223,17 +201,6 @@ class GraphicSketch(Sketch):
         except KeyError:
             ...
 
-    """def delete_points(self):
-        if GraphicSketch.deleting_point_mode == False:
-            GraphicSketch.deleting_point_mode = True
-            self.delete_points_button.config(bg="red")
-            self.canv.unbind("<ButtonRelease-3>")
-            self.canv.bind('<ButtonRelease-1>', lambda event: self.delete_point(GraphicSketch.processed_point))
-        else:
-            GraphicSketch.deleting_point_mode = False
-            self.delete_points_button.config(bg="white")
-            self.canv.unbind("<ButtonRelease-1>")
-            self.canv.bind('<ButtonRelease-3>', self.create_point)"""
 
     def hide_all_rays(self):
         for point in self.points:
@@ -299,27 +266,18 @@ class NumericSketch(Sketch):
         
 
     def create_lens(self):
-        """
-        space = 30
-        lens = (self.canv.create_line(385,10,385,390, fill="black", width=2),
-        return lens
-        """
-        #return obj.NumericLens(self)
         return CreateLensWindow(400, 200, self.master, self)
     
+
     def create_lens2(self):
         self.place_lens_button.config(background="red")
         self.canv.bind('<ButtonRelease-1>', self.place_lens)
-        """
-        space = 30
-        lens = (self.canv.create_line(385,10,385,390, fill="black", width=2),
-        return lens
-        """
-        #return obj.NumericLens(self)
+
     
     def create_point(self):
         self.place_object_button.config(background="red")
         self.canv.bind('<ButtonRelease-1>', self.place_point)
+
 
     def define_rays(self):
         for point in self.points:
@@ -330,28 +288,32 @@ class NumericSketch(Sketch):
             field_aperture = list(field_tan_dict.keys())[0]
             field_ray = obj.NumericFieldRay(self, main_aperture, field_aperture)
 
+
     def define_aperture_ray(self):
         for point in self.points:
             aperture_tan_dict = alg.NumericCalc.define_main_aperture(point, self.apertures)
             aperture_ray = obj.NumericApertureRay(self, point, list(aperture_tan_dict.keys())[0])
     
+
     def place_point(self, event):
         self.place_object_button.config(background="white")
         self.canv.unbind('<ButtonRelease-1>')
         self.points.append(obj.NumericPoint(event.x, event.y, self))
 
+
     def create_aperture(self):
         self.place_aperture_button.config(background="red")
         self.canv.bind('<ButtonRelease-1>', self.place_aperture)
 
+
     def move_distance_label(self, event):
         self.canv.unbind('<ButtonRelease-1>')
         self.canv.bind('<ButtonRelease-1>', self.place_aperture)
+
     
     def place_aperture(self, event):
         self.place_aperture_button.config(background="white")
         self.canv.unbind('<ButtonRelease-1>')
-        #return NumericDiameterEntry2(event.x, event.y, self.master)
         return CreateApertureWindow(event.x, event.y, self.master, self)
 
 
@@ -359,6 +321,7 @@ class NumericSketch(Sketch):
         self.place_lens_button.config(background="white")
         self.canv.unbind('<ButtonRelease-1>')
         return CreateLensWindow(event.x, event.y, self.master, self)
+
 
     def show_data(self):
         print(len(self.apertures))
@@ -406,7 +369,6 @@ class NumericEntry2():
 
     def __init__(self, x, y, master):
         self.entry = tk.Entry(master=master, width=40, bd=3)
-        #self.entry.place(x=x+50, y=y+30)
         self.entry.pack()
 
 
@@ -424,18 +386,14 @@ class NumericDiameterEntry2(NumericEntry2):
 
     def process_diameter_entry_value(self, entry, sketch, window):
         diameter = abs(float(entry.get()))
-        #sketch.canv.delete(window)
 
         sketch.apertures.append(obj.NumericAperture(self.x, self.y, sketch, diameter))
-
-        #USUN TO
 
 
     def set_diameter_value(self, sketch):
         diameter = 30
         print("SETTING DIAMETER VALUE")
         self.entry.insert(0, f"{diameter}")
-        #window = sketch.canv.create_window(self.y, self.y, window=self.entry, anchor=tk.NW)
 
         self.entry.bind("<FocusIn>", lambda event: NumericEntry.temp_text(event, self.entry, diameter))
         self.entry.bind("<Return>", lambda event: self.process_diameter_entry_value(self.entry, sketch))
@@ -465,15 +423,11 @@ class NumericFocalEntry(NumericEntry):
 class NumericWindow:
 
     def __init__(self, x, y, master) -> None:
-        #self.window = tk.Label(master=master, width=30, height=20)
         self.window = tk.Toplevel(master)
         
         self.x = x
         self.y = y
         
-        #self.window.geome
-        #self.window.place(x=x, y=y)
-        #self.set_focal_value(sketch)
 
     def __del__(self):
         ...
@@ -482,7 +436,6 @@ class NumericWindow:
     def delete_window(self):
         print("DELETED WINDOW")
         self.window.destroy()
-        #self.window.update()
 
 
 class CreateApertureWindow(NumericWindow):
@@ -497,7 +450,6 @@ class CreateApertureWindow(NumericWindow):
         self.button = tk.Button(self.window, text="OK", command = self.process_values)
         self.button.pack()
 
-    
 
     def process_values(self):
         diameter = abs(float(self.diameter_entry.entry.get()))
@@ -528,7 +480,6 @@ class CreateLensWindow(NumericWindow):
     def process_values(self):
         diameter = abs(float(self.diameter_entry.entry.get()))
         focal = float(self.focal_entry.entry.get())
-        #sketch.canv.delete(window)
         new_lens = obj.NumericLensObject2(self.x, self.y, self.sketch, diameter, focal)
         if len(self.sketch.lenses) == 0:
             self.sketch.lens = new_lens
