@@ -1,31 +1,28 @@
 import tkinter as tk
-import object as obj
-#import object as obj
-#import object as obj
-import algorithm as alg
-#import algorithm as alg
+
+import sketches as sk
+
 
 
 class MainWindow:
+
 
     def __init__(self):
         self.root = tk.Tk()
         self.root.title("Lensor")
         self.sketch = None
+        self.properties_table = None
+        self.screen_width = self.root.winfo_screenwidth()
+        self.screen_height = self.root.winfo_screenheight()
 
-        self.new_graphic_button = tk.Button(self.root, text="New graphic method project", command=self.create_graphic_project)
-        self.new_graphic_button.pack(pady=20)
+        self.menu = tk.Menu(self.root)
+        filemenu = tk.Menu(self.menu, tearoff=0)
+        filemenu.add_command(label="New Graphic Project", command=self.create_graphic_project)
+        filemenu.add_command(label="New Numeric Project", command=self.create_numeric_project)
+        self.menu.add_cascade(label="File", menu=filemenu)
+        #menu.add_command(label="New", command=self.clear_sketch)
 
-        self.new_numeric_button = tk.Button(self.root, text="New numeric method project", command=self.create_numeric_project)
-        self.new_numeric_button.pack(pady=20)
-
-        self.open_graphic_button = tk.Button(self.root, text="Open graphic method project...", command=self.open_graphic_project)
-        self.open_graphic_button.pack(pady=20)
-
-        self.open_numeric_button = tk.Button(self.root, text="Open numeric method project...", command=self.open_numeric_project)
-        self.open_numeric_button.pack(pady=20)
-
-
+        self.root.config(menu=self.menu)
 
     def destroy_starting_buttons(self):
         self.new_graphic_button.destroy()
@@ -34,18 +31,19 @@ class MainWindow:
         self.open_graphic_button.destroy()
         self.open_numeric_button.destroy()
 
-
-
     def create_graphic_project(self):
-        self.destroy_starting_buttons()
-        self.root.geometry("1000x500")
-        self.sketch = GraphicSketch(self.root)
-
+        #self.destroy_starting_buttons()
+        #self.root.geometry("1000x500")
+        self.root.state('zoomed')
+        self.sketch = GraphicProject(self)
+        #self.properties_table = self.create_properties_table()
 
     def create_numeric_project(self):
-        self.destroy_starting_buttons()
+        #self.destroy_starting_buttons()
         self.root.geometry("1000x500")
-        self.sketch = NumericSketch(self.root)
+        #self.root.state('zoomed')
+        self.sketch = NumericProject(self)
+        #self.properties_table = self.create_properties_table()
 
     def open_graphic_project(self):
         self.destroy_starting_buttons()
@@ -53,20 +51,74 @@ class MainWindow:
     def open_numeric_project(self):
         self.destroy_starting_buttons()
 
+    def create_properties_table(self):
+        properties_table = PropertiesTable(self)
+        return properties_table
+    
+
+class PropertiesTable:
+
+    def __init__(self, project) -> None:
+        self.project = project
+        self.base = self.create_base()
+        self.table_screen_frame = None
+        self.object_properties_frame = None
+        self.table_screen = self.create_table_screen()
+        #self.create_table_screen()
+        self.object_properties = self.create_object_properties()
+    
+    def create_base(self):
+        base = tk.Frame(self.project.root, width=100, height=self.project.screen_height)
+        base.place(x=1120, y=0)
+        #base.pack_propagate(0)
+        return base
+
+    def create_table_screen_frame(self):
+        frame = tk.Frame(self.base, height=240, width=240)
+        frame.pack()
+        frame.pack_propagate(0)
+        return frame
+    
+    def create_object_properties_frame(self):
+        frame = tk.Frame(self.base, height=500, width=240)
+        frame.pack(pady=10)
+        frame.pack_propagate(0)
+        return frame
+
+    def create_table_screen(self):
+        frame = self.create_table_screen_frame()
+        table = tk.Canvas(
+            master=frame,
+            highlightbackground="black",
+            highlightthickness=2,
+            background="white",
+            )
+        table.pack()
+        return table
+    
+    def create_object_properties(self):
+        frame = self.create_object_properties_frame()
+        table = tk.Canvas(
+            master=frame,
+            highlightbackground="black",
+            highlightthickness=2,
+            background="white",
+            )
+        table.pack()
+        return table
+
+
 
 
 class Mouse:
-
     x = None
     y = None
-
 
     left_button_is_held = False
 
     def mouse_motion(event):
         Mouse.x, Mouse.y = event.x, event.y
-        print('MOUSE: {}, {}'.format(Mouse.x, Mouse.y))
-
+        print("MOUSE: {}, {}".format(Mouse.x, Mouse.y))
 
     def left_button_held(event):
         print("LPM CLICKED")
@@ -81,419 +133,447 @@ def pos_on_widget(event):
     Mouse.on_widget_x, Mouse.on_widget_y = event.x, event.y
 
 
+class GraphicProject:
 
-class Sketch:
+    def __init__(self, window, lenses=1):
 
-    def __init__(self, master, lenses=1):
-        self.master = master
-        self.canv = tk.Canvas(master=master, width=800, height=400, highlightbackground="black", highlightthickness=2, background="white")
-        self.canv.pack(padx=100, pady=50)
-        self.canv.bind('<Enter><Button-3>', Mouse.mouse_motion)
-        self.axis = self.create_axis()
-        
-
-
-    def create_axis(self):
-        return obj.Axis(self, 0, 200, 800, 200)
-
-
-
-
-class GraphicSketch(Sketch):
-
-    over_point = False
-    deleting_point_mode = False
-    processed_point = None
-    shape_initial_points = []
-    points_coords = []
-
-
-    def __init__(self, master, lenses=1):
-        super().__init__(master, lenses)
-        self.lens = self.create_lens()
-        self.clear_sketch_button = tk.Button(master=master, text="Clear", command=self.clear_sketch)
-        self.clear_sketch_button.place(x=5,y=5)
-        self.create_shape_button = tk.Button(master=master, text="Shape", command=self.build_shape)
-        self.create_shape_button.place(x=50,y=5)
-        self.show_data_button = tk.Button(master=master, text="Data", command=self.show_data)
-        self.show_data_button.place(x=95,y=5)
-        self.toggle_type_button = tk.Button(master=master, text="Toggle type", command=self.toggle_type)
-        self.toggle_type_button.place(x=140,y=5)
-        self.hide_all_rays_button = tk.Button(master=master, text="Hide all rays", command=self.hide_all_rays)
-        self.hide_all_rays_button.place(x=215,y=5)
-        self.unhide_all_rays_button = tk.Button(master=master, text="Unhide all rays", command=self.unhide_all_rays)
-        self.unhide_all_rays_button.place(x=300,y=5)
-        self.canv.bind('<ButtonRelease-3>', self.create_point)
+        self.window = window
+        self.width = window.root.winfo_width()
+        self.height = window.root.winfo_height()
+        self.lenses = []
         self.points = []
         self.resulting_points = {}
+        self.lines = []
+        self.resulting_lines = {}
         self.shapes = []
+        self.resulting_shapes = {}
         self.building_shape = False
+        self.building_line = False
+        self.line_initial_points = []
+        self.shape_initial_lines = []
+        self.points_coords = []
+
+        processed_point = None
+        self.window.menu = self.create_graphic_project_menu_bar()
+        self.base = self.create_project_frame()
+        """self.create_buttons()
+
+        self.canv = self.create_graphic_sketch()"""
+
+
+    def create_graphic_project_menu_bar(self):
+        graphic_project_menu = tk.Menu(self.window.root)
+        file_menu = tk.Menu(graphic_project_menu, tearoff=0)
+        file_menu.add_command(label="New Graphic Project", command=self.window.create_graphic_project)
+        file_menu.add_command(label="New Numeric Project", command=self.window.create_numeric_project)
+        graphic_project_menu.add_cascade(label="File", menu=file_menu)
+        sketch_menu = tk.Menu(graphic_project_menu, tearoff=0)
+        sketch_menu.add_command(label="Clear", command=self.clear_sketch)
+        sketch_menu.add_command(label="Toggle Lens Type", command=self.toggle_type)
+        graphic_project_menu.add_cascade(label="Sketch", menu=sketch_menu)
+        object_menu = tk.Menu(graphic_project_menu, tearoff=0)
+        object_menu.add_command(label="Place Line", command=self.build_line)
+        object_menu.add_command(label="Place Shape", command=self.build_shape)
+        graphic_project_menu.add_cascade(label="Object", menu=object_menu)
+        rays_menu = tk.Menu(graphic_project_menu, tearoff=0)
+        rays_menu.add_command(label="Hide All Rays", command=self.hide_all_rays)
+        rays_menu.add_command(label="Unhide All Rays", command=self.unhide_all_rays)
+        graphic_project_menu.add_cascade(label="Rays", menu=rays_menu)
+        lens_menu = tk.Menu(graphic_project_menu, tearoff=0)
+        lens_menu.add_command(label="Lenses Properties", command=self.change_lenses_properties)
+        lens_menu.add_command(label="Add Lens", command=self.add_lens)
+        graphic_project_menu.add_cascade(label="Lens", menu=lens_menu)
+        data_menu = tk.Menu(graphic_project_menu, tearoff=0)
+        data_menu.add_command(label="Show Data", command=self.show_data)
+        graphic_project_menu.add_cascade(label="Data", menu=data_menu)
+        
+
+        self.window.root.config(menu=graphic_project_menu)
+        return graphic_project_menu
+
+
+    def create_left_frame(self, master):
+        left_frame = tk.Frame(master)
+        left_frame.pack(side=tk.LEFT)
+        self.create_sketch_frame(left_frame)
+        self.create_console_frame(left_frame)
+
+
+
+    def create_sketch_frame(self, master):
+        sketch_frame = tk.Frame(master, width= self.width, height=4*self.height/5)
+        sketch_frame.pack(side=tk.TOP)
+        sketch_frame.pack_propagate(0)
+        self.create_graphic_sketch(sketch_frame)
+
+
+    def create_console_frame(self, master):
+        console_frame = tk.Frame(master, width= self.width, height=self.height/5, bg="red")
+        console_frame.pack(side=tk.TOP)
+        console_frame.pack_propagate(0)
+
+
+    def create_object_properties_frame(self, master):
+        ...
+
+
+    def create_project_frame(self):
+        frame = tk.Frame(self.window.root)
+        frame.pack()
+        self.create_left_frame(frame)
+        return frame
         
 
 
-    def create_lens(self, focal = 100, pos = 400, space = 30):
-        return obj.GraphicLens(self, focal, pos, space)
+    def create_graphic_sketch(self, master):
+        self.canv = sk.GraphicSketch(self, master)
+
+    def change_lenses_properties(self):
+        ...
     
-    def check_point_presence(self, x, y):
-        if len(self.points) > 0:
-            for point in self.points:
-                if x == point.x and y == point.y:
-                    return True
-                else:
-                    return False
-        else:
-            return False
-
-
-    def create_point(self, event):
-        point_presence = self.check_point_presence(event.x, event.y)
-        if point_presence is False:
-            GraphicSketch.points_coords.append((event.x, event.y))
-            point = self.new_point(event.x, event.y)
-            if self.building_shape:
-                GraphicSketch.shape_initial_points.append(point)
-                obj.Shape.initial_points.append(point)
-            
-            for x in range (0, len(self.points)):
-                print(f"{x+1}. {self.points[x]}: {self.points[x].x}x{self.points[x].y}, {event.x}x{event.y} -> {self.points[x].its_image_point}, ")
-        else:
-            print("THE POINT IS ALREADY DRAWN")
-            for x in self.points:
-                print(x)
-
-    def new_point(self, x, y):
-        return obj.Point(x, y, self)
-
-
-    def cursor_over_point(self, point: obj.Point):
-        self.canv.unbind("<ButtonRelease-3>")
-        print(f"CURSOR OVER POINT OF ID {point.point_img}")
-        GraphicSketch.processed_point = point
+    def add_lens(self):
+        ...
         
-    def cursor_left_point(self):
-        self.canv.bind('<ButtonRelease-3>', self.create_point)
-        print("CURSOR LEFT THE POINT")
-        GraphicSketch.processed_point = None
-
+    def build_line(self):
+        #self.create_line_button.config(bg="red")
+        #self.master.bind("<Return>", lambda event: self.canv.create_line())
+        self.window.root.bind("<Escape>", lambda event: self.canv.stop_creating_line())
+        self.building_line = True
 
     def build_shape(self):
-        print("CREATING SHAPE")
-        self.create_shape_button.config(bg="red")
-        self.master.bind("<Return>", lambda event: GraphicSketch.create_shape(self))
+        #self.create_shape_button.config(bg="red")
+        self.window.root.bind("<Return>", lambda event: self.canv.create_shape())
+        self.window.root.bind("<Escape>", lambda event: self.canv.stop_creating_shape())
         self.building_shape = True
 
     def clear_sketch(self):
-        for shape in self.shapes:
-            shape.delete_shape(self)
-        self.shapes.clear()
-        print(f"POINTS: {len(self.points)}, SHAPES: {len(self.shapes)}")
-        counter = 1
-        print(self.points)
-        for x in range (0, len(self.points)):
-            self.points[-1].delete_point(self)
-            print(self.points)
-            counter += 1
-        
-
-    def delete_point(self, point: obj.Point):
-        try:
-            point.delete_point(self)
-        except KeyError:
-            ...
-
+        if self.building_shape is False and self.building_line is False:
+            return self.canv.clear_sketch()
 
     def hide_all_rays(self):
-        for point in self.points:
-            obj.Point.hide_rays(point, self)
-
+        return self.canv.hide_all_rays()
 
     def show_data(self):
-        print(f"SHAPES: {len(self.shapes)}, POINTS: {len(self.points)}")
-        for x in range(0, len(list(self.resulting_points.keys()))):
-            keys = list(self.resulting_points.keys())
-            print(f"{x+1}: {keys[x]} : {self.resulting_points[keys[x]]}")
-
+        pass
 
     def toggle_type(self):
-        focal = self.lens.focal * -1
-        pos = self.lens.pos
-        space = self.lens.space
-        print(f"{focal} {pos} {space}")
-        self.lens.erase_image(self)
-        del self.lens
-        self.lens = self.create_lens(focal, pos, space)
-        obj.lens_toggle_render(self)
-
+        return self.canv.toggle_type()
 
     def unhide_all_rays(self):
-        for point in self.points:
-            obj.Point.unhide_rays(point, self)
+        return self.canv.unhide_all_rays()
 
 
 
-    @staticmethod
-    def create_shape(sketch):
-        shape = obj.Shape(None, None, GraphicSketch.shape_initial_points, sketch)
-        GraphicSketch.shape_initial_points.clear()
-        obj.Shape.initial_points = []
-        print(f"SHAPE CREATED, length: {len(shape.points)}")
-        sketch.create_shape_button.config(bg="white")
-        sketch.master.unbind("<Return>")
-        sketch.building_shape = False
+class NumericProject:
+    def __init__(self, window, lenses=1):
 
-
-
-class NumericSketch(Sketch):
-
-    def __init__(self, master, lenses=1):
-        super().__init__(master, lenses)
-        self.create_lens()
+        self.window = window
         self.lenses = []
+        self.user_defined_lenses = []
+        self.real_plane_lenses = []
+        self.resulting_lenses = {}
+        self.lens_numbers_dictionary = {}
         self.apertures = []
+        self.user_defined_apertures = []
+        self.real_plane_apertures = []
+        self.resulting_apertures = {}
         self.points = []
+        self.user_defined_points = []
+        self.real_plane_points = []
+        self.resulting_points = {}
+        self.objects = []
         
-        self.place_object_button = tk.Button(master=master, text="Object", command=self.create_point)
-        self.place_object_button.place(x=5, y=5)
-        self.place_aperture_button = tk.Button(master=master, text="Aperture", command=self.create_aperture)
-        self.place_aperture_button.place(x=50, y=5)
-        self.place_lens_button = tk.Button(master=master, text="Lens", command=self.create_lens2)
-        self.place_lens_button.place(x=115, y=5)
-        self.show_data_button = tk.Button(master=master, text="Data", command=self.show_data)
-        self.show_data_button.place(x=160, y=5)
-        self.define_rays_button = tk.Button(master=master, text="Define rays", command=self.define_rays)
-        self.define_rays_button.place(x=220, y=5)
-        self.define_aperture_ray_button = tk.Button(master=master, text="Define aperture ray", command=self.define_aperture_ray)
-        self.define_aperture_ray_button.place(x=300, y=5)
-        
-        
+        self.aperture_rays = []
+        self.field_rays = []
 
-    def create_lens(self):
-        return CreateLensWindow(400, 200, self.master, self)
+        self.window.menu = self.create_numeric_project_menu_bar()
+        self.base = self.create_project_frame()
+
+    def create_numeric_project_menu_bar(self):
+        numeric_project_menu = tk.Menu(self.window.root)
+        file_menu = tk.Menu(numeric_project_menu, tearoff=0)
+        file_menu.add_command(label="New Graphic Project", command=self.window.create_graphic_project)
+        file_menu.add_command(label="New Numeric Project", command=self.window.create_numeric_project)
+        numeric_project_menu.add_cascade(label="File", menu=file_menu)
+        sketch_menu = tk.Menu(numeric_project_menu, tearoff=0)
+        sketch_menu.add_command(label="Clear", command=self.clear_sketch)
+        numeric_project_menu.add_cascade(label="Sketch", menu=sketch_menu)
+        object_menu = tk.Menu(numeric_project_menu, tearoff=0)
+        object_menu.add_command(label="Place Aperture", command=self.create_aperture)
+        object_menu.add_command(label="Place Lens", command=self.create_lens)
+        object_menu.add_command(label="Define Rays", command=self.define_rays)
+        object_menu.add_command(label="Define Aperture Ray", command=self.define_aperture_ray)
+        object_menu.add_command(label="Define Field Ray", command=self.define_aperture_ray)
+        object_menu.add_command(label="Show Objects Data", command=self.show_objects_data)
+        numeric_project_menu.add_cascade(label="Object", menu=object_menu)
+        #menu.add_command(label="New", command=self.clear_sketch)
+
+        self.window.root.config(menu=numeric_project_menu)
+        return numeric_project_menu
+
+    def create_left_frame(self, master):
+        left_frame = tk.Frame(master)
+        left_frame.pack(side=tk.LEFT)
+        #self.create_buttons_frame(left_frame)
+        self.create_sketch_frame(left_frame)
+        self.create_console_frame(left_frame)
+
+    def create_right_frame(self, master):
+        right_frame = tk.Frame(master)
+        right_frame.pack(side=tk.RIGHT)
+        #right_frame.pack_propagate(0)
+        self.create_object_properties_frame(right_frame)
     
+    def create_buttons_frame(self, master):
+        button_frame = tk.Frame(master, width=1150, height=40)
+        button_frame.pack(side=tk.TOP)
+        button_frame.pack_propagate(0)
+        self.create_menu(button_frame)
+        self.create_buttons(button_frame)
 
-    def create_lens2(self):
-        self.place_lens_button.config(background="red")
-        self.canv.bind('<ButtonRelease-1>', self.place_lens)
+    def create_sketch_frame(self, master):
+        sketch_frame = tk.Frame(master, width=1100, height=560)
+        sketch_frame.pack(side=tk.TOP)
+        sketch_frame.pack_propagate(0)
+        self.create_numeric_sketch(sketch_frame)
 
-    
-    def create_point(self):
-        self.place_object_button.config(background="red")
-        self.canv.bind('<ButtonRelease-1>', self.place_point)
+    def create_console_frame(self, master):
+        console_frame = tk.Frame(master, width=1100, height=200, bg="white", highlightbackground="black", highlightthickness=1)
+        console_frame.pack(side=tk.TOP)
+        console_frame.pack_propagate(0)
+
+    def create_object_properties_frame(self, master):
+        self.object_properties = NumericObjectsProperties(master=master, width=self.window.screen_width-1100, height=self.window.screen_height, window=self.window)
+
+    def create_project_frame(self):
+        frame = tk.Frame(self.window.root)
+        frame.pack()
+        self.create_left_frame(frame)
+        self.create_right_frame(frame)
+        return frame
+
+    def clear_sketch(self):
+        ...
+
+    def create_numeric_sketch(self, master):
+        self.canv = sk.NumericSketch(self, master)
+
+    def create_object_properties(self, master):
+        master.update()
+        width = master.winfo_width()
+        height = master.winfo_height()
+        print(f"{width} x {height}")
+        self.object_properties_table = tk.Label(master, width=width, height=height)
+        self.object_properties_table.pack(side=tk.TOP)
 
 
     def define_rays(self):
-        for point in self.points:
-            aperture_tan_dict = alg.NumericCalc.define_main_aperture(point, self.apertures)
-            main_aperture = list(aperture_tan_dict.keys())[0]
-            aperture_ray = obj.NumericApertureRay(self, point, main_aperture)
-            field_tan_dict = alg.NumericCalc.define_field_aperture(main_aperture, self.apertures)
-            field_aperture = list(field_tan_dict.keys())[0]
-            field_ray = obj.NumericFieldRay(self, main_aperture, field_aperture)
-
+        self.canv.define_rays(self)
 
     def define_aperture_ray(self):
-        for point in self.points:
-            aperture_tan_dict = alg.NumericCalc.define_main_aperture(point, self.apertures)
-            aperture_ray = obj.NumericApertureRay(self, point, list(aperture_tan_dict.keys())[0])
-    
+        ...
 
-    def place_point(self, event):
-        self.place_object_button.config(background="white")
-        self.canv.unbind('<ButtonRelease-1>')
-        self.points.append(obj.NumericPoint(event.x, event.y, self))
+    def print_objects_data(self):
+        print("OBJECTS")
+        for item in self.objects:
+            print(f"{item}, {item.x}")
+        print("APERTURES")
+        for item in self.apertures:
+            print(f"{item}, {item.x}")
+        print("LENSES")
+        for item in self.lenses:
+            print(f"{item}, {item.x}")
+        #print(self.objects)
+            
+    def print_apertures_data(self):
+        print("PLACED APERTURES")
+        for item in list(self.resulting_apertures.keys()):
+            print(f"{item}, {item.x}")
+        print("RESULTING APERTURES")
+        for item in list(self.resulting_apertures.values()):
+            print(f"{item}, {item.x}")
+        print("REAL PLANE APERTURES")
+        for item in self.real_plane_apertures:
+            if item is not None:
+                print(f"{item}, {item.x}")
 
+    def print_lenses_data(self):
+        print("PLACED LENSES")
+        for item in self.user_defined_lenses:
+            print(f"{item}, {item.x}")
+        print("RESULTING LENSES")
+        for item in list(self.resulting_lenses.values()):
+            if item is not None:
+                print(f"{item}, {item.x}")
+        print("REAL PLANE LENSES")
+        for item in self.real_plane_lenses:
+            if item is not None:
+                print(f"{item}, {item.x}")
+
+    def print_points_data(self):
+        print("PLACED POINTS")
+        for item in self.user_defined_points:
+            print(f"{item}, {item.x}")
+        print("RESULTING POINTS")
+        for item in list(self.resulting_points.values()):
+            if item is not None:
+                print(f"{item}, {item.x}")
 
     def create_aperture(self):
-        self.place_aperture_button.config(background="red")
-        self.canv.bind('<ButtonRelease-1>', self.place_aperture)
-
+        return self.canv.create_aperture()
+    
+    def create_lens(self):
+        return self.canv.create_lens2()
 
     def move_distance_label(self, event):
-        self.canv.unbind('<ButtonRelease-1>')
-        self.canv.bind('<ButtonRelease-1>', self.place_aperture)
-
-    
-    def place_aperture(self, event):
-        self.place_aperture_button.config(background="white")
-        self.canv.unbind('<ButtonRelease-1>')
-        return CreateApertureWindow(event.x, event.y, self.master, self)
-
-
-    def place_lens(self, event):
-        self.place_lens_button.config(background="white")
-        self.canv.unbind('<ButtonRelease-1>')
-        return CreateLensWindow(event.x, event.y, self.master, self)
-
+        self.canv.unbind("<ButtonRelease-1>")
+        self.canv.bind("<ButtonRelease-1>", self.place_aperture)
 
     def show_data(self):
         print(len(self.apertures))
 
-
-
-class NumericEntry():
-
-    def __init__(self, x, y, sketch):
-        self.x = x
-        self.y = y
-        print(f"{x}, {y}")
-        self.entry = tk.Entry(master=sketch.canv, width=5,  bd=3)
-        self.entry.place(x=self.x, y=self.y)
-
-
-    @staticmethod
-    def temp_text(e, entry, text):
-        entry.delete(text, "end")
-
-
-class NumericDiameterEntry(NumericEntry):
-
-    def __init__(self, x, y, sketch) -> None:
-        super().__init__(x, y, sketch)
-        self.set_diameter_value(sketch)
-
-    def process_diameter_entry_value(self, entry, sketch, window):
-        diameter = abs(float(entry.get()))
-        sketch.canv.delete(window)
-        sketch.apertures.append(obj.NumericAperture(self.x, self.y, sketch, diameter))
-
-
-    def set_diameter_value(self, sketch):
-        diameter = 30
-        print("SETTING DIAMETER VALUE")
-        self.entry.insert(0, f"{diameter}")
-        window = sketch.canv.create_window(self.y, self.y, window=self.entry, anchor=tk.NW)
-        self.entry.bind("<FocusIn>", lambda event: NumericEntry.temp_text(event, self.entry, diameter))
-        self.entry.bind("<Return>", lambda event: self.process_diameter_entry_value(self.entry, sketch, window))
+    def show_objects_data(self):
+        print(self.objects)
 
 
 
-class NumericEntry2():
+class NumericObjectsProperties(tk.Frame):
 
-    def __init__(self, x, y, master):
-        self.entry = tk.Entry(master=master, width=40, bd=3)
-        self.entry.pack()
+    def __init__(self, master, width, height, window):
+        super().__init__(master=master, width=width, height=height, highlightbackground="black", highlightthickness=1)
+        self.pack(side=tk.TOP)
+        self.pack_propagate(0)
+        self.master = master
+        self.width = width
+        self.height = height
+        self.window = window
+        self.list_of_rows = []
+        self.create_properties()
 
+    def create_properties(self):
+        self.create_properties_label(self)
+        self.table_columns = self.create_table(self)
 
-    @staticmethod
-    def temp_text(e, entry, text):
-        entry.delete(text, "end")
+    def create_properties_label(self, master):
+        properties_label = tk.Label(master=master, width=self.width, text="OBJECTS PROPERTIES", highlightbackground="black", highlightthickness=1)
+        properties_label.pack(side=tk.TOP)
+        #properties_label.pack_propagate(0)
 
+    def create_properties_columns(self, master):
+        self.object_name_column = self.create_object_name_column(master)
+        self.object_distance_column = self.create_object_distance_column(master)
+        self.object_diameter_column = self.create_object_diameter_column(master)
+        self.object_focal_column = self.create_object_focal_column(master)
 
+    def create_object_name_column(self, master):
+        object_name_column = tk.Frame(master, width=2*self.width/5, height=self.window.screen_height)
+        object_name_column.pack(side=tk.LEFT)
+        object_name_column.pack_propagate(0)
+        return object_name_column
+    
+    def create_object_distance_column(self, master):
+        object_distance_column = tk.Frame(master, width=self.width/5, height=self.window.screen_height)
+        object_distance_column.pack(side=tk.LEFT)
+        object_distance_column.pack_propagate(0)
+        return object_distance_column
+    
+    def create_object_diameter_column(self, master):
+        object_diameter_column = tk.Frame(master, width=self.width/5, height=self.window.screen_height)
+        object_diameter_column.pack(side=tk.LEFT)
+        object_diameter_column.pack_propagate(0)
+        return object_diameter_column
+    
+    def create_object_focal_column(self, master):
+        object_focal_column = tk.Frame(master, width=self.width/5, height=self.window.screen_height)
+        object_focal_column.pack(side=tk.LEFT)
+        object_focal_column.pack_propagate(0)
+        return object_focal_column
+    
+    def create_table(self, master):
+        table_frame = tk.Frame(master, width=self.width, height=self.window.screen_height)
+        table_frame.pack(side=tk.TOP)
+        table_frame.pack_propagate(0)
+        self.create_properties_columns(table_frame)
+        self.create_first_row()
+        return table_frame
 
-class NumericDiameterEntry2(NumericEntry2):
+    def create_first_row(self):
+        name_label = tk.Label(master=self.object_name_column, width=int(2*self.width/5), text="Name", highlightbackground="black", highlightthickness=1)
+        name_label.pack(side=tk.TOP)
+        distance_label = tk.Label(master=self.object_distance_column, width=int(self.width/2), text="Distance", highlightbackground="black", highlightthickness=1)
+        distance_label.pack(side=tk.TOP)
+        diameter_label = tk.Label(master=self.object_diameter_column, width=int(self.width/5), text="Diameter", highlightbackground="black", highlightthickness=1)
+        diameter_label.pack(side=tk.TOP)
+        focal_label = tk.Label(master=self.object_focal_column, width=int(self.width/5), text="Focal", highlightbackground="black", highlightthickness=1)
+        focal_label.pack(side=tk.TOP)
 
-    def __init__(self, x, y, master) -> None:
-        super().__init__(x, y, master)
-        self.set_diameter_value(master)
+    def create_properties_row(self, numeric_object):
+        new_row = NumericPropertiesRow(self, numeric_object)
+        self.list_of_rows.append(new_row)
 
-    def process_diameter_entry_value(self, entry, sketch, window):
-        diameter = abs(float(entry.get()))
-
-        sketch.apertures.append(obj.NumericAperture(self.x, self.y, sketch, diameter))
-
-
-    def set_diameter_value(self, sketch):
-        diameter = 30
-        print("SETTING DIAMETER VALUE")
-        self.entry.insert(0, f"{diameter}")
-
-        self.entry.bind("<FocusIn>", lambda event: NumericEntry.temp_text(event, self.entry, diameter))
-        self.entry.bind("<Return>", lambda event: self.process_diameter_entry_value(self.entry, sketch))
-
-
-class NumericFocalEntry(NumericEntry):
-
-    def __init__(self, x, y, sketch) -> None:
-        super().__init__(x, y, sketch)
-        self.set_focal_value(sketch)
-
-    def process_focal_entry_value(self, entry, sketch, window):
-        diameter = float(entry.get())
-        sketch.canv.delete(window)
-        sketch.apertures.append(obj.NumericAperture(self.x, self.y, sketch, diameter))
-
-
-    def set_focal_value(self, sketch):
-        focal = 50
-        print("SETTING FOCAL VALUE")
-        self.entry.insert(0, f"{focal}")
-        window = sketch.canv.create_window(self.y, self.y, window=self.entry, anchor=tk.NW)
-        self.entry.bind("<FocusIn>", lambda event: NumericEntry.temp_text(event, self.entry, focal))
-        self.entry.bind("<Return>", lambda event: self.process_focal_entry_value(self.entry, sketch, window))
-
-
-class NumericWindow:
-
-    def __init__(self, x, y, master) -> None:
-        self.window = tk.Toplevel(master)
-        
-        self.x = x
-        self.y = y
-        
-
-    def __del__(self):
-        ...
-
-
-    def delete_window(self):
-        print("DELETED WINDOW")
-        self.window.destroy()
-
-
-class CreateApertureWindow(NumericWindow):
-
-    def __init__(self, x, y, master, sketch) -> None:
-        super().__init__(x, y, master)
-        self.sketch = sketch
-        self.window.title("Create aperture")
-        self.diameter_label = tk.Label(self.window, text="SET DIAMETER VALUE:")
-        self.diameter_label.pack()
-        self.diameter_entry = NumericEntry2(10, 10, self.window)
-        self.button = tk.Button(self.window, text="OK", command = self.process_values)
-        self.button.pack()
+    def remove_properties_row(self, numeric_object):
+        for properties_row in self.list_of_rows:
+            if properties_row.numeric_object is numeric_object:
+                properties_row.delete_row()
+                self.list_of_rows.remove(properties_row)
+                return
 
 
-    def process_values(self):
-        diameter = abs(float(self.diameter_entry.entry.get()))
-        self.sketch.apertures.append(obj.NumericAperture(self.x, self.y, self.sketch, diameter))
-        print(diameter)
-        self.delete_window()
-        
+class NumericPropertiesRow:
 
+    def __init__(self, properties, numeric_object):
+        self.properties = properties
+        self.numeric_object = numeric_object
+        self.create_row()
 
-class CreateLensWindow(NumericWindow):
+    def create_row(self):
+        self.name_label = self.create_name_label()
+        self.distance_label = self.create_distance_label()
+        self.diameter_label = self.create_diameter_label()
+        self.focal_label = self.create_focal_label()
 
-    def __init__(self, x, y, master, sketch) -> None:
-        super().__init__(x, y, master)
-        self.window.title("Create lens")
-        self.sketch = sketch
-        self.diameter_label = tk.Label(self.window, text="SET DIAMETER VALUE:")
-        self.diameter_label.pack()
-        self.diameter_entry = NumericEntry2(10, 10, self.window)
+    def create_name_label(self):
+        name_label = tk.Label(master=self.properties.object_name_column, width=int(2*self.properties.width/5), text=self.numeric_object, bg="white")
+        name_label.pack(side=tk.TOP)
+        return name_label
+    
+    def create_distance_label(self):
+        distance_label = tk.Label(master=self.properties.object_distance_column, width=int(self.properties.width/5), text=self.numeric_object.distance_value, bg="white")
+        distance_label.pack(side=tk.TOP)
+        return distance_label
+    
+    def create_diameter_label(self):
+        try:
+            diameter_label = tk.Label(master=self.properties.object_diameter_column, width=int(self.properties.width/5) , text= "%.3f" % self.numeric_object.diameter, bg="white")
+        except AttributeError:
+            diameter_label = tk.Label(master=self.properties.object_diameter_column, width=int(self.properties.width/5) , text="-", bg="white")
+        diameter_label.pack(side=tk.TOP)
+        return diameter_label
+    
+    def create_focal_label(self):
+        try:
+            if self.numeric_object.focal is not None:
+                focal_label = tk.Label(master=self.properties.object_focal_column, width=int(self.properties.width/4) , text=self.numeric_object.focal, bg="white")
+            else:
+                focal_label = tk.Label(master=self.properties.object_focal_column, width=int(self.properties.width/4) , text="-", bg="white")
+        except AttributeError:
+            focal_label = tk.Label(master=self.properties.object_focal_column, width=int(self.properties.width/4) , text="-", bg="white")
+        focal_label.pack(side=tk.TOP)
+        return focal_label
 
-        self.focal_label = tk.Label(self.window, text="SET FOCAL VALUE:")
-        self.focal_label.pack()
-        self.focal_entry = NumericEntry2(10, 10, self.window)
+    def update_row(self):
+        self.delete_row()
+        self.create_row()
+    
 
-        self.button = tk.Button(self.window, text="OK", command = self.process_values)
-        self.button.pack()
-
-
-    def process_values(self):
-        diameter = abs(float(self.diameter_entry.entry.get()))
-        focal = float(self.focal_entry.entry.get())
-        new_lens = obj.NumericLensObject2(self.x, self.y, self.sketch, diameter, focal)
-        if len(self.sketch.lenses) == 0:
-            self.sketch.lens = new_lens
-        self.sketch.lenses.append(new_lens)
-        self.sketch.apertures.append(new_lens)
-        print(diameter)
-        print(focal)
-        self.delete_window()
+    def delete_row(self):
+        self.name_label.destroy()
+        self.distance_label.destroy()
+        self.diameter_label.destroy()
+        self.focal_label.destroy()
 
 
 
 if __name__ == "__main__":
-
     app = MainWindow()
     app.root.mainloop()
