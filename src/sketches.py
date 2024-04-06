@@ -1,4 +1,3 @@
-#import objects as obj
 import tkinter as tk
 import algorithm as alg
 import graphic_objects_logic as graphic_obj
@@ -11,14 +10,13 @@ class GraphicSketch(tk.Canvas):
         super().__init__(
             master,
             width=project.width-6,
-            height=550,
+            height=project.height,
             highlightbackground="black",
             highlightthickness=2,
             background="white",
             )
         self.height=int(self.cget("height"))
         self.width=int(self.cget("width"))
-        #self.place(x=10, y=40)
         self.pack()
         self.project = project
         self.master = master
@@ -35,6 +33,7 @@ class GraphicSketch(tk.Canvas):
     def create_lens(self, focal=100):
         new_lens = graphic_obj.GraphicLens(self, focal, self.width/2, self.height/2)
         self.project.lenses.append(new_lens)
+        return new_lens
 
     def check_point_presence(self, x, y):
         if len(self.project.points) > 0:
@@ -59,17 +58,8 @@ class GraphicSketch(tk.Canvas):
                 if len(self.project.line_initial_points) > 1:
                     self.create_graphic_line(building_shape=True)
                     self.project.shape_initial_lines.append(self.project.lines[-2])
-                #graphic_obj.Shape.initial_points.append(point)
 
-            """for x in range(0, len(self.project.points)):
-                print(
-                    f"{x+1}. {self.project.points[x]}: {self.project.points[x].x}x{self.project.points[x].y}, {event.x}x{event.y} -> {self.project.points[x].its_image_point}, "
-                )"""
             self.render_sketch()
-        else:
-            print("THE POINT IS ALREADY DRAWN")
-            for x in self.project.points:
-                print(x)
 
     def new_point(self, x, y):
         return graphic_obj.Point(x, y, self)
@@ -90,20 +80,13 @@ class GraphicSketch(tk.Canvas):
             line.delete_line()
         self.project.lines.clear()
         self.project.resulting_lines.clear()
-        print(self.project.points)
 
         points_list_len = len(self.project.points)
-        print(points_list_len)
-        print("DELETING POINTS")
         for point in self.project.points:
             point.delete_point()
         
         self.project.points.clear()
         self.project.resulting_points.clear()
-        print(self.project.shapes)
-        #print(self.project.resulting_points)
-        print(self.project.lines)
-        print(self.project.points)
         self.render_sketch()
 
 
@@ -113,21 +96,17 @@ class GraphicSketch(tk.Canvas):
 
 
     def show_data(self):
-        print(f"SHAPES: {len(self.shapes)}, POINTS: {len(self.points)}")
         for x in range(0, len(list(self.resulting_points.keys()))):
             keys = list(self.resulting_points.keys())
-            print(f"{x+1}: {keys[x]} : {self.resulting_points[keys[x]]}")
 
     def toggle_type(self):
         focal = self.lens.focal * -1
         pos = self.lens.pos
         space = self.lens.space
-        print(f"{focal} {pos} {space}")
         self.lens.delete_lens()
         del self.lens
         self.lens = self.create_lens(focal)
         graphic_obj.lens_toggle_render(self, self.lens)
-        #self.render_sketch()
 
     def unhide_all_rays(self):
         for point in self.project.points:
@@ -140,11 +119,7 @@ class GraphicSketch(tk.Canvas):
             self.project.line_initial_points.pop(0)
         else:
             self.project.line_initial_points.clear()
-        #graphic_obj.Shape.initial_points = []
-        print(f"LINE CREATED, {self.project.lines}")
         self.project.building_line = False
-        #self.project.create_line_button.config(bg="white")
-        #self.project.master.unbind("<Return>")
         self.render_sketch()
 
     def stop_creating_line(self):
@@ -155,21 +130,15 @@ class GraphicSketch(tk.Canvas):
         
         self.project.line_initial_points.clear()
 
-        #print(f"LINE CREATED, {self.project.lines}")
         self.project.building_line = False
-        #self.project.create_line_button.config(bg="white")
         
 
 
     def create_shape(self):
         shape = graphic_obj.Shape(self.project.shape_initial_lines, self, "user_defined")
-        #resulting_shape = graphic_obj.Shape2(self.project.shape_initial_points, self)
         self.project.shape_initial_lines.clear()
         self.project.line_initial_points.clear()
         self.project.building_shape = False
-        #graphic_obj.Shape.initial_points = []
-        print(f"SHAPE CREATED, length: {len(self.project.shapes)}")
-        #self.project.create_shape_button.config(bg="white")
         self.unbind("<ButtonRelease-1>")
         self.render_sketch()
         
@@ -199,16 +168,10 @@ class GraphicSketch(tk.Canvas):
         
         self.project.shape_initial_lines.clear()
 
-        #print(f"LINE CREATED, {self.project.lines}")
         self.project.building_line = False
-        #self.project.create_line_button.config(bg="white")
 
 
     def render_sketch(self):
-        """self.axis.render_axis()
-        self.lens.render_lens()
-        for line in self.project.lines:
-            line.render"""
         graphic_obj.render_all_objects(self.project)
 
 
@@ -218,21 +181,19 @@ class NumericSketch(tk.Canvas):
         super().__init__(
             master,
             width=1100,
-            height=550,
+            height=project.window.screen_height,
             highlightbackground="black",
             highlightthickness=2,
             background="white",
             )
         self.height=int(self.cget("height"))
         self.width=int(self.cget("width"))
-        #self.place(x=10, y=40)
         self.pack(side=tk.LEFT)
         self.project = project
         self.master = master
         self.bind("<ButtonRelease-3>", self.create_object)
 
         self.axis = self.create_axis()
-        #self.lens = self.create_lens(focal=100, diameter=120, pos=self.width/2)
         self.lens = None
         self.place_lens()
         
@@ -245,35 +206,28 @@ class NumericSketch(tk.Canvas):
     
 
     def create_lens2(self):
-        #self.project.place_lens_button.config(background="red")
         self.bind("<ButtonRelease-1>", self.place_lens)
 
 
     def create_object(self, event):
-        #return numeric_obj.NumericPoint(event.x, self.axis.y, self)
         return LensConversionCheckbox(self, event, creating_point=True)
 
     def create_aperture(self):
-        #self.project.place_aperture_button.config(background="red")
         self.bind("<ButtonRelease-1>", self.place_aperture)
 
 
     def place_aperture(self, event):
-        #self.project.place_aperture_button.config(background="white")
         self.unbind("<ButtonRelease-1>")
         self.unbind("<ButtonRelease-3>")
-        #return CreateApertureWindow(event.x, event.y, self.master, self)
         return LensConversionCheckbox(self, event, creating_aperture=True)
     
     def place_lens(self, event=None):
-        #self.project.place_lens_button.config(background="white")
         self.unbind("<ButtonRelease-1>")
         if event == None:
             self.unbind("<ButtonRelease-3>")
             return CreateLensWindow(self.width/2, self.axis.y, self.master, self)
         else:
             self.unbind("<ButtonRelease-3>")
-            #return CreateLensWindow(event.x, event.y, self.master, self)
             return LensConversionCheckbox(self, event, creating_lens=True)
     
 
@@ -287,7 +241,6 @@ class NumericSketch(tk.Canvas):
 
 
     def define_rays(self, project):
-        #lenses = list(self.project.resulting_lenses.keys())
         self.clear_rays_lists(project)
         lenses = self.project.user_defined_lenses
         for point in project.user_defined_points:
@@ -297,9 +250,6 @@ class NumericSketch(tk.Canvas):
             )
             main_aperture = list(aperture_tan_dict.keys())[0]
             aperture_ray = numeric_obj.NumericApertureRay(self, real_plane_point, main_aperture, right_object=lenses[0])
-            """aperture_ray_2 = numeric_obj.NumericApertureRay(
-                self, point.item_of, list(aperture_tan_dict.keys())[0]
-            )"""
             field_tan_dict = alg.NumericCalc.define_field_aperture(
                 main_aperture, project.real_plane_apertures
             )
@@ -313,65 +263,7 @@ class NumericSketch(tk.Canvas):
                     field_ray = numeric_obj.NumericFieldRay(self, main_aperture, field_aperture, right_object=lenses[0])
                     aperture_ray.bound_field_ray = field_ray
                     field_ray.bound_aperture_ray = aperture_ray
-                #field_ray_2 = numeric_obj.NumericFieldRay(self, main_aperture, field_aperture.item_of, -1)
 
-
-    """def create_lens(self):
-        return CreateLensWindow(400, 200, self.master, self)"""
-
-    """def create_lens2(self):
-        self.place_lens_button.config(background="red")
-        self.canv.bind("<ButtonRelease-1>", self.place_lens)
-
-    def create_point(self):
-        self.place_object_button.config(background="red")
-        self.canv.bind("<ButtonRelease-1>", self.place_point)
-
-    def define_rays(self):
-        for point in self.points:
-            aperture_tan_dict = alg.NumericCalc.define_main_aperture(
-                point, self.apertures
-            )
-            main_aperture = list(aperture_tan_dict.keys())[0]
-            aperture_ray = obj.NumericApertureRay(self, point, main_aperture)
-            field_tan_dict = alg.NumericCalc.define_field_aperture(
-                main_aperture, self.apertures
-            )
-            field_aperture = list(field_tan_dict.keys())[0]
-            field_ray = obj.NumericFieldRay(self, main_aperture, field_aperture)
-
-    def define_aperture_ray(self):
-        for point in self.points:
-            aperture_tan_dict = alg.NumericCalc.define_main_aperture(
-                point, self.apertures
-            )
-            aperture_ray = obj.NumericApertureRay(
-                self, point, list(aperture_tan_dict.keys())[0]
-            )
-
-    def place_point(self, event):
-        self.place_object_button.config(background="white")
-        self.canv.unbind("<ButtonRelease-1>")
-        self.points.append(obj.NumericPoint(event.x, event.y, self))
-
-    def create_aperture(self):
-        self.place_aperture_button.config(background="red")
-        self.canv.bind("<ButtonRelease-1>", self.place_aperture)
-
-    def move_distance_label(self, event):
-        self.canv.unbind("<ButtonRelease-1>")
-        self.canv.bind("<ButtonRelease-1>", self.place_aperture)
-
-    def place_aperture(self, event):
-        self.place_aperture_button.config(background="white")
-        self.canv.unbind("<ButtonRelease-1>")
-        return CreateApertureWindow(event.x, event.y, self.master, self)
-
-    
-
-    def show_data(self):
-        print(len(self.apertures))"""
-        
 
 class NumericEntry2:
     def __init__(self, x, y, master):
@@ -405,8 +297,6 @@ class NumericWindow:
 
 
 class CheckboxOptionRow(tk.Frame):
-
-    #lens_options_list = []
     
     lens_options_list = {}
     conversion_options_list = ["Item", "Image"]
@@ -417,8 +307,6 @@ class CheckboxOptionRow(tk.Frame):
         self.window = window
         self.generate_lens_option_list()
         
-        
-        #self.label = self.create_label()
         self.lens_option_menu = self.create_lens_option_menu()
         self.conversion_option_menu = self.create_conversion_option_menu()
         self.distance_value_input = self.create_distance_value_input()
@@ -433,8 +321,6 @@ class CheckboxOptionRow(tk.Frame):
     def generate_lens_option_list(self):
         CheckboxOptionRow.lens_options_list.clear()
         for i, item in enumerate(self.window.sketch.project.user_defined_lenses):
-            print(f"{item} -> {item.number}")
-            #CheckboxOptionRow.lens_options_list.update({item.number : self.window.event.x - item.x})
             CheckboxOptionRow.lens_options_list.update({item.number : item})
 
     def get_conversion_option_value(self):
@@ -453,7 +339,6 @@ class CheckboxOptionRow(tk.Frame):
         label = tk.Label(master=self, text=label_text)
         label.pack(side=tk.LEFT)
         distance_entry = tk.Entry(self, width=10)
-        #distance_entry.insert(0, f"{CheckboxOptionRow.lens_options_list[int(self.lens_option_value.get())]}")
         distance_value = self.window.event.x - CheckboxOptionRow.lens_options_list[int(self.lens_option_value.get())].x
         distance_entry.insert(0, f"{distance_value}")
         distance_entry.pack(side=tk.LEFT)
@@ -469,8 +354,6 @@ class CheckboxOptionRow(tk.Frame):
         label_text = "Object-to-lens relation: "
         label = tk.Label(master=self, text=label_text)
         label.pack(side=tk.LEFT)
-        #input = tk.Entry(master=self)
-        #input.pack(side=tk.LEFT)
         self.conversion_option_value = self.get_conversion_option_value()
         options = tk.OptionMenu(self, self.conversion_option_value, *CheckboxOptionRow.conversion_options_list)
         options.pack(side=tk.LEFT)
@@ -480,8 +363,6 @@ class CheckboxOptionRow(tk.Frame):
         label_text = "Lens no. "
         label = tk.Label(master=self, text=label_text)
         label.pack(side=tk.LEFT)
-        #input = tk.Entry(master=self)
-        #input.pack(side=tk.LEFT)
         self.lens_option_value = self.get_lens_option_value()
         options = tk.OptionMenu(self, self.lens_option_value, *list(CheckboxOptionRow.lens_options_list.keys()))
         options.pack(side=tk.LEFT)
@@ -489,7 +370,6 @@ class CheckboxOptionRow(tk.Frame):
     
     def get_option_values(self):
         lens_number_option = int(self.lens_option_value.get())
-        #lens_option = self.window.sketch.project.lens_numbers_dictionary[lens_number_option]
         lens_option = CheckboxOptionRow.lens_options_list[lens_number_option]
         conversion_option = self.conversion_option_value.get()
         distance_input_value = float(self.distance_value_input.get()) + lens_option.x
@@ -517,7 +397,6 @@ class LensConversionCheckbox(tk.Toplevel):
         self.option_rows = []
         self.input = {}
         self.distance_input = {}
-        #self.inputs = []
         self.button = self.create_proceed_button()
         self.option_row = self.create_option_row()
         
@@ -531,10 +410,6 @@ class LensConversionCheckbox(tk.Toplevel):
             option_row = CheckboxOptionRow(self)
             option_row.pack(side=tk.TOP)
             return option_row
-            """for lens in self.sketch.project.lenses:
-                option_row = CheckboxOptionRow(self, lens)
-                option_row.pack(side=tk.TOP)
-                self.option_rows.append(option_row)"""
 
 
     def create_proceed_button(self):
@@ -570,17 +445,6 @@ class LensConversionCheckbox(tk.Toplevel):
         self.destroy()
 
 
-"""class CreateObjectWindow(NumericWindow):
-    
-    def __init__(self, x, y, master, sketch) -> None:
-        super().__init__(x, y, master)
-        self.sketch = sketch
-        self.window.title("Create object")
-        #self.diameter_label = tk.Label(self.window, text="SET DIAMETER VALUE:")
-        #self.diameter_label.pack()
-        self.diameter_entry = NumericEntry2(10, 10, self.window)
-        self.button = tk.Button(self.window, text="OK", command=self.process_values)
-        self.button.pack()"""
 
 class CreateApertureWindow(NumericWindow):
     def __init__(self, x, y, master, sketch, lens_conversion_type) -> None:
@@ -595,12 +459,7 @@ class CreateApertureWindow(NumericWindow):
 
     def process_values(self):
         diameter = abs(float(self.diameter_entry.entry.get()))
-        """self.sketch.project.apertures.append(
-            numeric_obj.NumericAperture(self.x, self.y, self.sketch, diameter, lens_conversion_type=self.lens_conversion_type)
-        )"""
         new_aperture = numeric_obj.NumericAperture(self.x, self.y, self.sketch, diameter, lens_conversion_type=self.lens_conversion_type)
-        #self.sketch.project.object_properties.create_properties_row(new_aperture)
-        print(diameter)
         self.delete_window()
         self.sketch.bind("<ButtonRelease-3>", self.sketch.create_object)
 
@@ -627,14 +486,5 @@ class CreateLensWindow(NumericWindow):
         diameter = abs(float(self.diameter_entry.entry.get()))
         focal = float(self.focal_entry.entry.get())
         new_lens = numeric_obj.NumericLensObject2(self.x, self.y, self.sketch, diameter, focal, lens_conversion_type=self.lens_conversion_type)
-        """if len(self.sketch.project.lenses) == 0:
-            self.sketch.lens = new_lens
-            self.sketch.project.resulting_lenses.update({new_lens : None})
-        self.sketch.project.lenses.append(new_lens)
-        self.sketch.project.apertures.append(new_lens)"""
-        #self.sketch.project.object_properties.create_properties_row(new_lens)
-        #new_lens.render_lenses_labels()
-        print(diameter)
-        print(focal)
         self.delete_window()
         self.sketch.bind("<ButtonRelease-3>", self.sketch.create_object)

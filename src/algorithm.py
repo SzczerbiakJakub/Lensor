@@ -22,10 +22,6 @@ class Calc:
                 if dict[key] < minimum_value:
                     minimum_value = dict[key]
                     minimum = {key: dict[key]}
-
-            print(
-                f"MINIMUM:  {list(minimum.keys())[0]} : {minimum[list(minimum.keys())[0]]}"
-            )
             return minimum
 
 
@@ -103,17 +99,13 @@ class NumericCalc(Calc):
             object = object.image_of
             postfix += "'"
 
-        #print(f"{self.type_per_lens[self.sketch.lens]}: {postfix}")
         return postfix
 
     @staticmethod
     def define_main_aperture(point, apertures):
         tan_dict = {}
-        print("APERTURE RAY:")
         for aperture in apertures:
             real_plane_aperture = NumericCalc.get_real_plane_aperture(aperture)
-            print(real_plane_aperture)
-            #print(real_plane_aperture.object_label.number_label.text)
             distance = Calc.distance_between_objects(point, real_plane_aperture)
             height = real_plane_aperture.diameter / 2
             tan = Calc.tan(height, distance)
@@ -121,31 +113,23 @@ class NumericCalc(Calc):
 
         keys = list(tan_dict.keys())
 
-        for key in keys:
-            print(f"{key} -> tan = {tan_dict[key]}")
-
         minimum = Calc.dict_minimum_index(tan_dict)
         return minimum
 
     @staticmethod
     def define_field_aperture(main_aperture, apertures):
         tan_dict = {}
-        print("FIELD RAY:")
         aperture_list = apertures.copy()
         if main_aperture in aperture_list:
             aperture_list.remove(main_aperture)
         for aperture in aperture_list:
             real_plane_aperture = NumericCalc.get_real_plane_aperture(aperture)
-            print(real_plane_aperture.object_label.number_label.text)
             distance = Calc.distance_between_objects(main_aperture, real_plane_aperture)
             height = real_plane_aperture.diameter / 2
             tan = Calc.tan(height, distance)
             tan_dict.update({real_plane_aperture: tan})
 
         keys = list(tan_dict.keys())
-
-        for key in keys:
-            print(f"{key.object_label.number_label.text} -> tan = {tan_dict[key]}")
 
         minimum = Calc.dict_minimum_index(tan_dict)
 

@@ -628,4 +628,3 @@ class NumericFieldRay(NumericRay):
         x2, y2 = self.item.ray_coords[1][0], self.item.ray_coords[1][1]
 
         return self.item.sketch.create_line(x1, y1, x2, y2, fill="blue", width=2)
-    

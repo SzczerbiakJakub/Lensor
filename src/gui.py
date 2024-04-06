@@ -1,11 +1,10 @@
 import tkinter as tk
-
 import sketches as sk
+import home_page_gui as home
 
 
 
 class MainWindow:
-
 
     def __init__(self):
         self.root = tk.Tk()
@@ -15,45 +14,48 @@ class MainWindow:
         self.screen_width = self.root.winfo_screenwidth()
         self.screen_height = self.root.winfo_screenheight()
 
+        self.menu = None
+        self.create_home_menu()
+
+        self.base = home.HomePage(self)
+
+        self.root.config(menu=self.menu)
+
+    def create_home_menu(self):
         self.menu = tk.Menu(self.root)
         filemenu = tk.Menu(self.menu, tearoff=0)
         filemenu.add_command(label="New Graphic Project", command=self.create_graphic_project)
         filemenu.add_command(label="New Numeric Project", command=self.create_numeric_project)
         self.menu.add_cascade(label="File", menu=filemenu)
-        #menu.add_command(label="New", command=self.clear_sketch)
-
-        self.root.config(menu=self.menu)
-
-    def destroy_starting_buttons(self):
-        self.new_graphic_button.destroy()
-        print(self.new_graphic_button)
-        self.new_numeric_button.destroy()
-        self.open_graphic_button.destroy()
-        self.open_numeric_button.destroy()
 
     def create_graphic_project(self):
-        #self.destroy_starting_buttons()
-        #self.root.geometry("1000x500")
         self.root.state('zoomed')
+        if self.sketch is not None:
+            self.sketch.base.destroy()
+        if self.base is not None:
+            self.base.destroy()
+            self.base = None
         self.sketch = GraphicProject(self)
-        #self.properties_table = self.create_properties_table()
 
     def create_numeric_project(self):
-        #self.destroy_starting_buttons()
-        self.root.geometry("1000x500")
-        #self.root.state('zoomed')
+        self.root.state('zoomed')
+        if self.sketch is not None:
+            self.sketch.base.destroy()
+        if self.base is not None:
+            self.base.destroy()
+            self.base = None
         self.sketch = NumericProject(self)
-        #self.properties_table = self.create_properties_table()
-
-    def open_graphic_project(self):
-        self.destroy_starting_buttons()
-
-    def open_numeric_project(self):
-        self.destroy_starting_buttons()
 
     def create_properties_table(self):
         properties_table = PropertiesTable(self)
         return properties_table
+    
+
+    def return_to_home_page(self):
+        self.sketch.base.destroy()
+        self.base = home.HomePage(self)
+        self.create_home_menu()
+        self.root.config(menu=self.menu)
     
 
 class PropertiesTable:
@@ -64,13 +66,11 @@ class PropertiesTable:
         self.table_screen_frame = None
         self.object_properties_frame = None
         self.table_screen = self.create_table_screen()
-        #self.create_table_screen()
         self.object_properties = self.create_object_properties()
     
     def create_base(self):
         base = tk.Frame(self.project.root, width=100, height=self.project.screen_height)
         base.place(x=1120, y=0)
-        #base.pack_propagate(0)
         return base
 
     def create_table_screen_frame(self):
@@ -118,14 +118,11 @@ class Mouse:
 
     def mouse_motion(event):
         Mouse.x, Mouse.y = event.x, event.y
-        print("MOUSE: {}, {}".format(Mouse.x, Mouse.y))
 
     def left_button_held(event):
-        print("LPM CLICKED")
         Mouse.left_button_is_held = True
 
     def left_button_released(event):
-        print("LPM RELEASED")
         Mouse.left_button_is_held = False
 
 
@@ -156,14 +153,12 @@ class GraphicProject:
         processed_point = None
         self.window.menu = self.create_graphic_project_menu_bar()
         self.base = self.create_project_frame()
-        """self.create_buttons()
-
-        self.canv = self.create_graphic_sketch()"""
 
 
     def create_graphic_project_menu_bar(self):
         graphic_project_menu = tk.Menu(self.window.root)
         file_menu = tk.Menu(graphic_project_menu, tearoff=0)
+        file_menu.add_command(label="Return to home page", command=self.window.return_to_home_page)
         file_menu.add_command(label="New Graphic Project", command=self.window.create_graphic_project)
         file_menu.add_command(label="New Numeric Project", command=self.window.create_numeric_project)
         graphic_project_menu.add_cascade(label="File", menu=file_menu)
@@ -196,25 +191,21 @@ class GraphicProject:
         left_frame = tk.Frame(master)
         left_frame.pack(side=tk.LEFT)
         self.create_sketch_frame(left_frame)
-        self.create_console_frame(left_frame)
+        #self.create_console_frame(left_frame)
 
 
 
     def create_sketch_frame(self, master):
-        sketch_frame = tk.Frame(master, width= self.width, height=4*self.height/5)
+        sketch_frame = tk.Frame(master, width= self.width, height=self.height)
         sketch_frame.pack(side=tk.TOP)
         sketch_frame.pack_propagate(0)
         self.create_graphic_sketch(sketch_frame)
 
 
     def create_console_frame(self, master):
-        console_frame = tk.Frame(master, width= self.width, height=self.height/5, bg="red")
+        console_frame = tk.Frame(master, width= self.width, height=self.height/5, bg="grey")
         console_frame.pack(side=tk.TOP)
         console_frame.pack_propagate(0)
-
-
-    def create_object_properties_frame(self, master):
-        ...
 
 
     def create_project_frame(self):
@@ -235,13 +226,10 @@ class GraphicProject:
         ...
         
     def build_line(self):
-        #self.create_line_button.config(bg="red")
-        #self.master.bind("<Return>", lambda event: self.canv.create_line())
         self.window.root.bind("<Escape>", lambda event: self.canv.stop_creating_line())
         self.building_line = True
 
     def build_shape(self):
-        #self.create_shape_button.config(bg="red")
         self.window.root.bind("<Return>", lambda event: self.canv.create_shape())
         self.window.root.bind("<Escape>", lambda event: self.canv.stop_creating_shape())
         self.building_shape = True
@@ -254,7 +242,7 @@ class GraphicProject:
         return self.canv.hide_all_rays()
 
     def show_data(self):
-        pass
+        ...
 
     def toggle_type(self):
         return self.canv.toggle_type()
@@ -292,6 +280,7 @@ class NumericProject:
     def create_numeric_project_menu_bar(self):
         numeric_project_menu = tk.Menu(self.window.root)
         file_menu = tk.Menu(numeric_project_menu, tearoff=0)
+        file_menu.add_command(label="Return to home page", command=self.window.return_to_home_page)
         file_menu.add_command(label="New Graphic Project", command=self.window.create_graphic_project)
         file_menu.add_command(label="New Numeric Project", command=self.window.create_numeric_project)
         numeric_project_menu.add_cascade(label="File", menu=file_menu)
@@ -304,9 +293,7 @@ class NumericProject:
         object_menu.add_command(label="Define Rays", command=self.define_rays)
         object_menu.add_command(label="Define Aperture Ray", command=self.define_aperture_ray)
         object_menu.add_command(label="Define Field Ray", command=self.define_aperture_ray)
-        object_menu.add_command(label="Show Objects Data", command=self.show_objects_data)
         numeric_project_menu.add_cascade(label="Object", menu=object_menu)
-        #menu.add_command(label="New", command=self.clear_sketch)
 
         self.window.root.config(menu=numeric_project_menu)
         return numeric_project_menu
@@ -314,14 +301,12 @@ class NumericProject:
     def create_left_frame(self, master):
         left_frame = tk.Frame(master)
         left_frame.pack(side=tk.LEFT)
-        #self.create_buttons_frame(left_frame)
         self.create_sketch_frame(left_frame)
-        self.create_console_frame(left_frame)
+        #self.create_console_frame(left_frame)
 
     def create_right_frame(self, master):
         right_frame = tk.Frame(master)
         right_frame.pack(side=tk.RIGHT)
-        #right_frame.pack_propagate(0)
         self.create_object_properties_frame(right_frame)
     
     def create_buttons_frame(self, master):
@@ -332,7 +317,7 @@ class NumericProject:
         self.create_buttons(button_frame)
 
     def create_sketch_frame(self, master):
-        sketch_frame = tk.Frame(master, width=1100, height=560)
+        sketch_frame = tk.Frame(master, width=1100, height=self.window.screen_height)
         sketch_frame.pack(side=tk.TOP)
         sketch_frame.pack_propagate(0)
         self.create_numeric_sketch(sketch_frame)
@@ -362,7 +347,6 @@ class NumericProject:
         master.update()
         width = master.winfo_width()
         height = master.winfo_height()
-        print(f"{width} x {height}")
         self.object_properties_table = tk.Label(master, width=width, height=height)
         self.object_properties_table.pack(side=tk.TOP)
 
@@ -373,51 +357,6 @@ class NumericProject:
     def define_aperture_ray(self):
         ...
 
-    def print_objects_data(self):
-        print("OBJECTS")
-        for item in self.objects:
-            print(f"{item}, {item.x}")
-        print("APERTURES")
-        for item in self.apertures:
-            print(f"{item}, {item.x}")
-        print("LENSES")
-        for item in self.lenses:
-            print(f"{item}, {item.x}")
-        #print(self.objects)
-            
-    def print_apertures_data(self):
-        print("PLACED APERTURES")
-        for item in list(self.resulting_apertures.keys()):
-            print(f"{item}, {item.x}")
-        print("RESULTING APERTURES")
-        for item in list(self.resulting_apertures.values()):
-            print(f"{item}, {item.x}")
-        print("REAL PLANE APERTURES")
-        for item in self.real_plane_apertures:
-            if item is not None:
-                print(f"{item}, {item.x}")
-
-    def print_lenses_data(self):
-        print("PLACED LENSES")
-        for item in self.user_defined_lenses:
-            print(f"{item}, {item.x}")
-        print("RESULTING LENSES")
-        for item in list(self.resulting_lenses.values()):
-            if item is not None:
-                print(f"{item}, {item.x}")
-        print("REAL PLANE LENSES")
-        for item in self.real_plane_lenses:
-            if item is not None:
-                print(f"{item}, {item.x}")
-
-    def print_points_data(self):
-        print("PLACED POINTS")
-        for item in self.user_defined_points:
-            print(f"{item}, {item.x}")
-        print("RESULTING POINTS")
-        for item in list(self.resulting_points.values()):
-            if item is not None:
-                print(f"{item}, {item.x}")
 
     def create_aperture(self):
         return self.canv.create_aperture()
@@ -428,13 +367,6 @@ class NumericProject:
     def move_distance_label(self, event):
         self.canv.unbind("<ButtonRelease-1>")
         self.canv.bind("<ButtonRelease-1>", self.place_aperture)
-
-    def show_data(self):
-        print(len(self.apertures))
-
-    def show_objects_data(self):
-        print(self.objects)
-
 
 
 class NumericObjectsProperties(tk.Frame):
@@ -457,7 +389,6 @@ class NumericObjectsProperties(tk.Frame):
     def create_properties_label(self, master):
         properties_label = tk.Label(master=master, width=self.width, text="OBJECTS PROPERTIES", highlightbackground="black", highlightthickness=1)
         properties_label.pack(side=tk.TOP)
-        #properties_label.pack_propagate(0)
 
     def create_properties_columns(self, master):
         self.object_name_column = self.create_object_name_column(master)

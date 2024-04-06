@@ -1,12 +1,25 @@
 import sys
 import pytest
+import tkinter as tk
+from unittest.mock import patch
 
 sys.path.insert(0, 'C:/users/administrator/apka/lensor/src')
 
 import gui
 
 
-#main_window = gui.MainWindow()
+class MockEvent:
+    def __init__(self, type, widget, x, y, char=None, keysym=None, delta=None):
+        self.type = type
+        self.widget = widget
+        self.x = x
+        self.y = y
+        self.char = char
+        self.keysym = keysym
+        self.delta = delta
+
+
+
 
 @pytest.fixture
 def get_main_window():
@@ -41,6 +54,10 @@ def get_numeric_project(get_main_window):
     main_window.create_numeric_project()
     numeric_sketch = main_window.sketch
     return main_window, numeric_sketch
+
+@pytest.fixture
+def event():
+    return "<ButtonRelease-3 state=Button3 num=3 x=91 y=69>"
 
 
 def test_create_graphic_project(get_graphic_project):
@@ -78,11 +95,21 @@ def test_destroy_starting_buttons(get_main_window):
     assert main_window.open_numeric_button != None
 
 
-def test_create_numeric_sketch(get_numeric_project):
-    main_window, numeric_sketch = get_numeric_project
-    assert numeric_sketch.master is main_window.root
-    assert int(numeric_sketch.canv.cget("width")) == 800
-    assert int(numeric_sketch.canv.cget("height")) == 400
+
+#   TEST OF SKETCH CLASS
+
+def test_create_sketch_axis(get_graphic_sketch, get_numeric_sketch):
+    graphic_sketch = get_graphic_sketch
+    numeric_sketch = get_numeric_sketch
+    assert graphic_sketch.axis is not None
+    assert graphic_sketch.axis.y1 == 200
+    assert numeric_sketch.axis is not None
+    assert numeric_sketch.axis.y1 == 200
+
+
+
+
+#   TESTS OF GRAPHIC SKETCH CLASS
 
 
 def test_create_graphic_sketch(get_graphic_project):
@@ -91,36 +118,13 @@ def test_create_graphic_sketch(get_graphic_project):
     assert int(graphic_sketch.canv.cget("width")) == 800
     assert int(graphic_sketch.canv.cget("height")) == 400
 
-
-def test_create_graphic_sketch_axis(get_graphic_project):
-    main_window, graphic_sketch = get_graphic_project
-    assert graphic_sketch.axis is not None
-    assert graphic_sketch.axis.y1 == 200
-    """main_window.create_numeric_project()
-    assert main_window.sketch.axis.y1 == 200"""
-
-def test_create_numeric_sketch_axis(get_numeric_project):
-    main_window, numeric_sketch = get_numeric_project
-    assert numeric_sketch.axis is not None
-    assert numeric_sketch.axis.y1 == 200
-
     
 
 def test_create_graphic_sketch_lens(get_graphic_sketch):
-     #main_window.create_graphic_project()
-     #graphic_sketch = main_window.sketch
      graphic_sketch = get_graphic_sketch
      assert graphic_sketch.lens.focal == 100
      assert graphic_sketch.lens.pos == 400
      assert graphic_sketch.lens.space == 30
-
-
-"""def test_create_graphic_sketch_lens(get_graphic_sketch):
-     #main_window.create_graphic_project()
-     #graphic_sketch = main_window.sketch
-     assert graphic_sketch.lens.focal == 100
-     assert graphic_sketch.lens.pos == 400
-     assert graphic_sketch.lens.space == 30"""
 
 
 def test_new_point(get_graphic_sketch):
@@ -193,3 +197,87 @@ def test_create_shape(get_graphic_sketch):
     gui.GraphicSketch.create_shape(graphic_sketch)
     assert graphic_sketch.create_shape_button.cget("bg") == "white"
     assert graphic_sketch.building_shape is False
+
+
+#   TESTS OF NUMERIC SKETCH CLASS
+
+
+def test_create_numeric_sketch(get_numeric_project):
+    main_window, numeric_sketch = get_numeric_project
+    assert numeric_sketch.master is main_window.root
+    assert int(numeric_sketch.canv.cget("width")) == 800
+    assert int(numeric_sketch.canv.cget("height")) == 400
+    assert numeric_sketch.lens is None
+    assert isinstance(numeric_sketch.lenses, list)
+    assert len(numeric_sketch.lenses) == 0
+    assert isinstance(numeric_sketch.apertures, list)
+    assert len(numeric_sketch.apertures) == 0
+    assert isinstance(numeric_sketch.points, list)
+    assert len(numeric_sketch.points) == 0
+
+
+
+def test_numeric_create_lens(get_numeric_sketch):
+    numeric_sketch = get_numeric_sketch
+    function_output = numeric_sketch.create_lens()
+    assert isinstance(function_output, gui.CreateLensWindow)
+    assert function_output.x == 400
+    assert function_output.y == 200
+    assert function_output.master is numeric_sketch.master
+    assert function_output.sketch is numeric_sketch
+
+
+def test_numeric_create_lens2(get_numeric_sketch):
+    numeric_sketch = get_numeric_sketch
+    numeric_sketch.create_lens2()
+    assert numeric_sketch.place_lens_button.cget("bg") == "red"
+
+def test_numeric_create_point(get_numeric_sketch):
+    numeric_sketch = get_numeric_sketch
+    numeric_sketch.create_point()
+    assert numeric_sketch.place_object_button.cget("bg") == "red"
+
+
+"""def test_numeric_place_point(get_numeric_sketch):
+    numeric_sketch = get_numeric_sketch
+    former_sketch_points_length = len(numeric_sketch.points)
+    event = MockEvent("ButtonRelease-1", None, 100, 100)
+    numeric_sketch.place_point(event)
+    assert numeric_sketch.place_object_button.cget("bg") == "white"
+    assert len(numeric_sketch.points) == former_sketch_points_length + 1"""
+
+
+"""def test_numeric_create_aperture(get_numeric_sketch):
+    numeric_sketch = get_numeric_sketch
+    numeric_sketch.create_aperture()
+    assert numeric_sketch.place_aperture_button.cget("bg") == "red"
+
+
+    def move_distance_label(self, event):
+        self.canv.unbind('<ButtonRelease-1>')
+        self.canv.bind('<ButtonRelease-1>', self.place_aperture)
+
+
+
+@patch <ButtonRelease event state=Button3 num=3 x=91 y=69>
+def test_numeric_place_point(get_numeric_sketch):
+    numeric_sketch = get_numeric_sketch
+    former_sketch_points_length = len(numeric_sketch.points)
+    numeric_sketch.place_aperture()
+    assert numeric_sketch.place_object_button.cget("bg") == "white"
+    assert len(numeric_sketch.points) == former_sketch_points_length + 1
+
+    def place_aperture(self, event):
+        self.place_aperture_button.config(background="white")
+        self.canv.unbind('<ButtonRelease-1>')
+        return CreateApertureWindow(event.x, event.y, self.master, self)
+
+
+    def place_lens(self, event):
+        self.place_lens_button.config(background="white")
+        self.canv.unbind('<ButtonRelease-1>')
+        return CreateLensWindow(event.x, event.y, self.master, self)
+
+
+    def show_data(self):
+        print(len(self.apertures))"""

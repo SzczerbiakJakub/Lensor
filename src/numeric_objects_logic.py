@@ -31,7 +31,6 @@ class NumericObject:
         self.resulting_object = None
         self.lens_conversion_type = lens_conversion_type
         self.is_in_infinity = is_in_infinity
-        print(lens_conversion_type)
         if lens_conversion_type is not None:
             lens = list(lens_conversion_type.keys())[0]
             if lens is not None:
@@ -54,7 +53,6 @@ class NumericObject:
         self.converted_by = None
         self.distance_value = None
         
-        #self.is_in_negative_infinity = False
         self.distance_labels = {"left" : None, "right" : None}
         
 
@@ -110,7 +108,6 @@ class NumericObject:
                     return None
                 else:
                     return list[i - 1]
-        #return list[-2]
     
     def get_next_object(self, list):
         current_object = self
@@ -131,7 +128,6 @@ class NumericObject:
 
 
     def insert_into_list(self, list):
-        #list = self.sketch.project.objects
         for i, list_item in enumerate(list):
             if self.x < list_item.x:
                 return list.insert(i, self)
@@ -344,7 +340,6 @@ class NumericObject:
                 self.sketch.project.resulting_points.pop(self)
         
         self.sketch.project.object_properties.remove_properties_row(self)
-        #self.sketch.project.objects.remove(self)
 
 
     def get_object_label(self):
@@ -371,7 +366,6 @@ class NumericObject:
         self.define_type_per_lens(lens)
         self.sprite.redraw()
         self.object_label = self.get_object_label()
-        #self.define_parameters_per_lens2(self.sketch.lens, self.type_per_lens[self.sketch.lens], position=value)
         self.define_parameters_per_lens2(lens, self.type_per_lens[lens], position=value)
         
         self.insert_into_list(self.sketch.project.objects)
@@ -442,10 +436,8 @@ class NumericObject:
             return
         else:
             conversion_type = self.lens_conversion_type[lens]
-            print(f"{lens} -> {conversion_type}")
             lens_index = self.sketch.project.user_defined_lenses.index(lens)
             self.set_object_postfix(lens_index, conversion_type)
-            #if conversion_type == "Item":
             self.define_parameters_per_lens2(lens, conversion_type)        
             self_resulting_object = self.convert_object(lens, conversion_type)
             
@@ -460,14 +452,11 @@ class NumericObject:
             rest_of_list = self.sketch.project.user_defined_lenses[:lens_index]
             rest_of_list.reverse()
 
-            #   TO POD SPODEM WAZNE BO MUSZA BYC PARAMETRY DLA ODWROTNYCH OPERACJI
-            #if len(rest_of_list) > 0:
             if conversion_type == "Item" or conversion_type == "item":
                 resulting_object = self
             elif conversion_type == "Image" or conversion_type == "image":
                 resulting_object = self_resulting_object
 
-                #self.define_parameters_per_lens2(rest_of_list[0], "Image")
             for previous_lens in rest_of_list:
                 resulting_object.define_parameters_per_lens2(previous_lens, "Image")        
                 resulting_object = resulting_object.convert_object(previous_lens, "Image")
@@ -563,7 +552,6 @@ class NumericPoint(NumericObject):
         is_in_infinity = False
     ) -> None:
         super().__init__(x, sketch, object_type, item_of, image_of, resulting_of, lens_conversion_type, is_in_infinity)
-        # self.y = sketch.axis.y - 5
         self.color = color
         self.bound_aperture_ray = None
         self.bound_field_ray = None
@@ -571,24 +559,18 @@ class NumericPoint(NumericObject):
         self.number = len(sketch.project.user_defined_points) + 1
         
         self.sprite = sprites.Point(self)
-        #self.sprite.image = self.draw(sketch)
 
         self.object_label = NumericPointLabel(
             self, sketch, self.type_per_lens[sketch.lens]
         )
-        #self.distance_label = self.draw_distance_label(sketch, sketch.lens)
         self.bind_select_object()
 
         self.add_to_lists()
 
-        if self.real_object is not None:
-            print(self.real_object.already_converted_by)
-
-    def __del__(self):
-        ...
 
     def __str__(self) -> str:
         return f"Point no. {self.number}{self.postfix}"
+
 
     def add_to_lists(self):
         if self.object_type == "user_defined":
@@ -610,10 +592,6 @@ class NumericPoint(NumericObject):
             + (self.y - sketch.axis.y) * self.parameters_per_lens[lens]["zoom"]
         )
 
-        print(f"determined x of {self}: {determined_x}")
-        print(determined_x == float("-inf") or determined_x == float("inf"))
-        # determined_diameter = self.diameter * abs(self.parameters_per_lens[lens]["zoom"])
-        #if determined_x == "-inf" or
         if determined_x == float("-inf") or determined_x == float("inf"):
             image = NumericPoint(
                 determined_x, determined_y, sketch, self.color, object_type="resulting", image_of = self, resulting_of=self,
@@ -645,7 +623,6 @@ class NumericPoint(NumericObject):
                     sketch.axis.y
                     + (self.y - sketch.axis.y) / self.parameters_per_lens[lens]["zoom"]
                 )
-        # determined_diameter = self.diameter * abs(self.parameters_per_lens[lens]["zoom"])
         if determined_x == float("-inf") or determined_x == float("inf"):
             item = NumericPoint(
                 determined_x, determined_y, sketch, self.color, object_type="resulting", item_of = self, resulting_of=self,
@@ -657,10 +634,6 @@ class NumericPoint(NumericObject):
                 determined_x, determined_y, sketch, self.color, object_type="resulting", item_of = self, resulting_of=self,
                 lens_conversion_type={lens.get_previous_object(self.sketch.project.user_defined_lenses) : "Image"}
             )   
-        """item = NumericPoint(
-            determined_x, determined_y, sketch, self.color, object_type="resulting", item_of = self, resulting_of=self,
-            lens_conversion_type={lens.get_previous_object(self.sketch.project.user_defined_lenses) : "Image"}
-        )  """ 
         item.number = self.number
         lens_index = self.sketch.project.user_defined_lenses.index(lens)
         item.set_object_postfix(lens_index, "Item")
@@ -670,7 +643,6 @@ class NumericPoint(NumericObject):
 
     @staticmethod
     def erase_point(point):
-        print("ERASING POINT")
         del point
 
 
@@ -689,8 +661,6 @@ class NumericDistanceLabel:
         self.text = NumericText(object_1.x, object_2.x, y, f"{value:0,.1f}", sketch)
         self.bind_select_option(sketch)
 
-    def __del__(self):
-        print("DELETED DISTANCE LABEL")
 
     def bind_select_option(self, sketch):
         self.distance.canvas.unbind("<Button-1>")
@@ -704,7 +674,6 @@ class NumericDistanceLabel:
 
     def select_label(self, sketch):
         NumericDistanceLabel.selected = self
-        print(f"SELECTED {NumericDistanceLabel.selected}")
         sketch.unbind("<ButtonRelease-1>")
         sketch.bind(
             "<ButtonRelease-1>", lambda event: self.move_label(event, sketch)
@@ -713,12 +682,10 @@ class NumericDistanceLabel:
     def move_label(self, event, sketch):
         self.distance.canvas.unbind("<ButtonRelease-1>")
         sketch.unbind("<ButtonRelease-1>")
-        print(f"MOVED {NumericDistanceLabel.selected} FROM {self.y} TO {event.y}")
         self.y = event.y
         NumericDistanceLabel.selected = None
         self.distance.place_canvas(self.object_1.x, self.object_2.x, self.y)
         self.text.place_canvas(self.object_1.x, self.object_2.x, self.y)
-        print(f"SELECTED {NumericDistanceLabel.selected}")
 
     def bind_change_distance(self, numeric_object):
         self.text.canvas.tag_bind(
@@ -741,8 +708,6 @@ class NumericDistance:
         self.line_2 = self.draw_line(x1, x2)
         self.place_canvas(x1, x2, y)
 
-    def __del__(self):
-        ...
 
     def draw_line(self, x1, x2):
         if x1 <= x2:
@@ -782,8 +747,6 @@ class NumericText:
         self.text_id = self.draw_text()
         self.place_canvas(x1, x2, y)
 
-    def __del__(self):
-        ...
 
     def draw_text(self):
         return self.canvas.create_text(
@@ -820,11 +783,7 @@ class NumericPointLabel:
         self.type = type
         self.y = self.define_number_y_position()
         self.number_label = self.define_point_number_label()
-        # self.diameter_label = self.define_aperture_diameter_label(point, sketch)
-        # self.value = NumericText(x1, x2, y, f"{value}", sketch)
 
-    def __del__(self):
-        print("DELETED APERTURE LABEL")
 
     def define_number_y_position(self):
         return self.point.y - 15
@@ -832,37 +791,17 @@ class NumericPointLabel:
     def define_point_number_label(self):
         point = self.point
         sketch = self.sketch
-        # if self.type == "image":
-        # return NumericText(point.x, point.x, self.y, f"P{len(self.sketch.project.points)}'", sketch, bd=1)
-        # if self.type == "item":
-        # return NumericText(point.x, point.x, self.y, f"P{len(self.sketch.project.points)}", sketch, bd=1)
         return NumericText(
             point.x, point.x, self.y, f"P{point.number}{point.postfix}", sketch, bd=1
         )
 
-    # def define_aperture_diameter_label(self, aperture, sketch):
-    # return NumericText(aperture.x-1, aperture.x+2, self.number_label.y-15, f"Ø: {aperture.diameter}'", sketch, bd=1)
-
     def delete_label(self):
         self.number_label.delete_text()
-        # self.diameter_label.delete_text()
         del self
 
     def update_label_text(self):
         self.number_label.delete_text()
         self.number_label = self.define_point_number_label()
-
-
-
-
-
-
-
-
-
-
-
-
 
 class NumericAperture(NumericObject):
     selected = None
@@ -889,25 +828,19 @@ class NumericAperture(NumericObject):
         
         self.number = len(sketch.project.user_defined_apertures) + 1
 
-        #self.sprite = self.draw(sketch)
         self.sprite = sprites.NumericAperture(self)
         self.object_label = NumericApertureLabel(
             self, sketch, self.type_per_lens[sketch.lens]
         )
-        #self.distance_label = self.draw_distance_label(sketch, sketch.lens)
 
-        """self.image = self.define_image(sketch)"""
         self.bind_select_object()
 
         self.add_to_lists()
     
 
-    def __del__(self):
-        print("deleted aperture")
-
-
     def __str__(self) -> str:
         return f"Aperture no. {self.number}{self.postfix}"
+
 
     def add_to_lists(self):
         if self.object_type == "user_defined":
@@ -948,11 +881,9 @@ class NumericAperture(NumericObject):
             self.image_of.object_label.update_label_text()
             self.postfix = alg.NumericCalc.determine_object_postfix(self)
             self.object_label.update_label_text()
-            # self.postfix += "'"
 
     def convert_per_lens(self):
         for lens in self.sketch.project.lenses:
-            print(lens)
             self.convert(lens)
 
     def determine_image(self, sketch, lens):
@@ -1021,17 +952,7 @@ class NumericAperture(NumericObject):
         item.object_label.update_label_text()
         return item
 
-    """def delete_object_manually(self):
-        NumericAperture.selected = None
-        self.delete_bound_objects()
-        self.delete_object()
-        NumericAperture.erase_aperture(self)"""
-
-    """def redraw(self, sketch):
-        return self.draw(sketch)"""
-
     def select_aperture(self):
-        print(f"SELECTED {self}")
         if NumericAperture.selected != None:
             NumericAperture.selected.bind_select_object()
         NumericAperture.selected = self
@@ -1044,8 +965,6 @@ class NumericAperture(NumericObject):
         real_plane_apertures = project.real_plane_apertures
         real_plane_apertures.clear()
         boundary_lens = project.user_defined_lenses[0]
-        print(f"BOUNDARY LENS: {boundary_lens}")
-        #real_plane_apertures.append(boundary_lens)
         if len(user_defined_apertures) >= 1:
             for aperture in user_defined_apertures:
                 aperture.get_real_plane_aperture(boundary_lens)
@@ -1064,11 +983,7 @@ class NumericApertureLabel:
         self.type = type
         self.y = self.define_number_y_position()
         self.number_label = self.define_aperture_number_label()
-        #self.diameter_label = self.define_aperture_diameter_label()
-        # self.value = NumericText(x1, x2, y, f"{value}", sketch)
 
-    def __del__(self):
-        print("DELETED APERTURE LABEL")
 
     def define_number_y_position(self):
         return self.sketch.axis.y - self.aperture.diameter / 2 - 15
@@ -1076,10 +991,6 @@ class NumericApertureLabel:
     def define_aperture_number_label(self):
         aperture = self.aperture
         sketch = self.sketch
-        # if self.type == "image":
-        # return NumericText(aperture.x, aperture.x, self.y, f"{len(sketch.project.apertures)+1}'", sketch, bd=1)
-        # if self.type == "item":
-        # return NumericText(aperture.x, aperture.x, self.y, f"{len(sketch.project.apertures)+1}", sketch, bd=1)
         return NumericText(
             aperture.x,
             aperture.x,
@@ -1103,7 +1014,6 @@ class NumericApertureLabel:
 
     def delete_label(self):
         self.number_label.delete_text()
-        #self.diameter_label.delete_text()
         del self
 
     def update_label_text(self):
@@ -1153,7 +1063,6 @@ class NumericRay:
             x2 = self.edge_point_object.x
             if isinstance(self, NumericApertureRay):
                 if self.former_ray_end is not None:
-                    print(f"{self.former_ray_end[1]} vs {self.edge_point_object.y + self.factor*self.edge_point_object.diameter/2}")
                     if self.former_ray_end[1] == self.edge_point_object.y + self.factor*self.edge_point_object.diameter/2:
                         y2 = self.edge_point_object.y + self.factor*self.edge_point_object.diameter/2
                     elif self.former_ray_end[1] == self.edge_point_object.y - self.factor*self.edge_point_object.diameter/2:
@@ -1224,11 +1133,6 @@ class NumericRay:
             x1 = 0
         else:
             x1 = self.left_object.x
-        print(self.linear_function['a'])
-        """if self.linear_function['a'] == 0:
-            #self.former_ray_end[1]
-        else:"""
-        #if self.edge_point_object.x == float("inf") or self.edge_point_object.x == float("-inf"):
         if self.linear_function['a'] == 1:
             coords.append((x1, self.linear_function['b']))
         else:
@@ -1238,7 +1142,6 @@ class NumericRay:
         else:
             x2 = self.right_object.x
         
-        #if self.edge_point_object.x == float("inf") or self.edge_point_object.x == float("-inf"):
         if self.linear_function['a'] == 1:
             coords.append((x2, self.linear_function['b']))
         else:
@@ -1270,17 +1173,10 @@ class NumericRay:
         self.delete_ray()
 
     def select_ray(self):
-        print(f"SELECTED {self}")
         if NumericRay.selected != None:
             NumericRay.selected.sprite.bind_select_ray()
         NumericRay.selected = self
         self.sprite.bind_delete_ray()
-
-"""class NumericRay:
-    def __init__(self, sketch, object_1, object_2):
-        self.sketch = sketch
-        self.object_1 = object_1
-        self.object_2 = object_2"""
 
 
 class NumericApertureRay(NumericRay):
@@ -1288,23 +1184,18 @@ class NumericApertureRay(NumericRay):
         super().__init__(sketch, point, aperture, left_object, right_object, factor, former_linear_factor, former_ray_end, object_type)
         self.sketch = sketch
         self.point = point
-        print(f"POINT: {self.point}")
         self.aperture = aperture
-        print(f"APERTURE: {self.aperture}")
         
         self.complementary_rays = []
 
         self.sprite = sprites.NumericApertureRay(self)
         
         if self.object_type == "user_defined":
-            #self.extend_ray()
             self.middle_point_object.bound_aperture_ray = self
             self.edge_point_object.bound_aperture_rays.append(self)
             self.get_complete_ray()
             self.sketch.project.aperture_rays.append(self)
 
-            print(f"ITS MEMBERS: {self.middle_point_object} -> {self.middle_point_object.bound_aperture_ray}, {self.edge_point_object} -> {self.edge_point_object.bound_aperture_rays}")
-        
         
     def __str___(self):
         print("Aperture ray")
@@ -1322,22 +1213,14 @@ class NumericApertureRay(NumericRay):
         if len(lenses_list) > 0:
             for lens in lenses_list:
                 point = point.item_of
-                print(point)
-                print(point.x)
                 if lens is not aperture:
                     aperture = aperture.item_of
-                print(aperture)
-                print(aperture.x)
                 if len(self.complementary_rays) == 0:
                     linear_factor = self.linear_function["a"]
                     ray_end = self.ray_coords[1]
-                    print(f"FIRST RAY CORDS: {ray_end} vs POINT Y: {point.y}")
-                    print(f"FIRST LINEAR FACTOR: {linear_factor}")
                 else:
                     linear_factor = self.complementary_rays[-1].linear_function["a"]
                     ray_end = self.complementary_rays[-1].ray_coords[1]
-                    print(f"RAY CORDS: {ray_end} vs POINT Y: {point.y}")
-                    print(f"LINEAR FACTOR: {linear_factor}")
                 self.extend_ray(point, aperture, linear_factor, ray_end, left_object=lens, right_object=lens.get_next_object(lenses_list))
 
 
@@ -1347,23 +1230,18 @@ class NumericFieldRay(NumericRay):
         super().__init__(sketch, middle_point_aperture, edge_point_aperture, left_object, right_object, factor, former_linear_factor=None, former_ray_end=former_ray_end, object_type=object_type)
         self.sketch = sketch
         self.middle_point_aperture = middle_point_aperture
-        print(f"APERTURE 1: {self.middle_point_aperture}")
         self.edge_point_aperture = edge_point_aperture
-        print(f"APERTURE 2: {self.edge_point_aperture}")
         self.factor = factor
         self.complementary_rays = []
         
         self.sprite = sprites.NumericFieldRay(self)
 
         if self.object_type == "user_defined":
-            #self.extended = self.extend_ray()
             self.middle_point_object.bound_field_rays.append(self)
             self.edge_point_object.bound_field_rays.append(self)
             self.get_complete_ray()
             self.sketch.project.field_rays.append(self)
         
-            print(f"ITS MEMBERS: {self.middle_point_object} -> {self.middle_point_object.bound_field_rays}, {self.edge_point_object} -> {self.edge_point_object.bound_field_rays}")
-    
 
     def __str___(self):
         print("Field ray")
@@ -1383,20 +1261,14 @@ class NumericFieldRay(NumericRay):
         lenses_list = self.sketch.project.user_defined_lenses
         if len(lenses_list) > 0:
             for lens in lenses_list:
-                #next_lens = NumericLensObject2.get_next_lens(lens, lenses_list)
                 if middle_point_aperture.item_of is not None and lens is not middle_point_aperture:
                     middle_point_aperture = middle_point_aperture.item_of
                 if lens is not edge_point_aperture:
                     edge_point_aperture = edge_point_aperture.item_of
                 if len(self.complementary_rays) == 0:
                     ray_end = self.ray_coords[1]
-                    print(f"FIRST MIDDLE POINT: {middle_point_aperture}")
-                    print(f"FIRST RAY CORDS: {ray_end} vs MIDDLE POINT X: {middle_point_aperture.x}")
                 else:
-                    print(f"MIDDLE POINT: {middle_point_aperture}")
-                    print(f"RAY CORDS: {ray_end} vs MIDDLE POINT X: {middle_point_aperture.x}")
                     ray_end = self.complementary_rays[-1].ray_coords[1]
-                #aperture = aperture.item_of
                 self.extend_ray(middle_point_aperture, edge_point_aperture, ray_end, left_object=lens, right_object=lens.get_next_object(lenses_list))
 
 
@@ -1448,8 +1320,6 @@ class NumericLensObject2(NumericObject):
         if len(self.sketch.project.points) > 0 and self.object_type == "user_defined":
             self.convert_objects_via_self()
 
-    def __del__(self):
-        print("deleted aperture")
 
     def __str__(self) -> str:
         return f"Lens no. {self.number}{self.postfix}"
@@ -1520,8 +1390,6 @@ class NumericLensObject2(NumericObject):
                         last_point.convert_object(current_lens, "Item")
                         current_lens = current_lens.get_next_object(self.sketch.project.user_defined_lenses)
 
-
-    #def clasify_objects(self):
 
 
 
@@ -1628,7 +1496,6 @@ class NumericLensObject2(NumericObject):
             item.item_of = self
         else:
             determined_x = self.parameters_per_lens[lens]["s"] + lens.x
-            # print(f"PRINTUJE IKSA: {determined_x}")
             determined_y = self.y
             if self.parameters_per_lens[lens]["zoom"] == 0:
                 determined_diameter = float("inf")
@@ -1739,7 +1606,6 @@ class NumericLensObject2(NumericObject):
             )
         )
 
-        #   MAKING CEASED LINE
         lines_space = 40
 
         starting_value = upper_end
@@ -1787,7 +1653,6 @@ class NumericLensObject2(NumericObject):
         self.sprite.redraw()
 
     def select_lens(self):
-        print(f"SELECTED {self}")
         if NumericLensObject2.selected != None:
             NumericLensObject2.selected.sprite.bind_select_object()
         NumericLensObject2.selected = self
@@ -1803,8 +1668,6 @@ class NumericLensLabel:
         self.y = self.define_number_y_position()
         self.number_label = self.define_aperture_number_label()
 
-    def __del__(self):
-        print("DELETED LENS LABEL")
 
     def define_lens_focal_label(self):
         aperture = self.lens
@@ -1851,5 +1714,3 @@ class NumericLensLabel:
     def update_label_text(self):
         self.delete_label()
         self.number_label = self.define_aperture_number_label()
-
-

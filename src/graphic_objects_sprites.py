@@ -320,7 +320,6 @@ class Point:
         text_x = self.item.x
         text_y = self.item.y+Point.radius+6
         text_input = self.item.label_id
-        print("CREATED LABEL")
         return self.sketch.create_text(text_x, text_y, text=text_input, font=Point.font, fill="black")
 
 
@@ -482,8 +481,6 @@ class Shape:
 
         if len(self.points) > 2:
             index = len(self.points) - 1
-            print("JEST OSTATNI INDEKSIOR")
-            #if len(self.points) > 2:
             x1 = self.points[index].x
             y1 = self.points[index].y
             x2 = self.points[0].x
@@ -492,49 +489,12 @@ class Shape:
             new_line = Line(x1, y1, x2, y2, self.sketch, self.type, self.color)
             lines.append(new_line)
 
-        print(f"SHAPE'S SIZE: {len(lines)}")
-
-        for x in self.points:
-            try:
-                print(f"{x} -> {self.sketch.project.resulting_points[x]}")
-            except KeyError:
-                print(f"{x} -> NONE")
-                self.sketch.itemconfig(x.sprite.image, fill="orange")
 
         return lines
     
     def draw(self):
         ...
 
-    """def build_resulting_shape(self, sketch):
-        width = 1
-        lines = []
-        for line in self.shape:
-            if line.focus_intersection == True:
-                new_line = Line(
-                    sketch.resulting_points[line.point_1],
-                    sketch.resulting_points[line.boundary_points[line.point_1]],
-                    sketch,
-                    "shape_res",
-                )
-                lines.append(new_line)
-                new_line = Line(
-                    sketch.resulting_points[line.point_2],
-                    sketch.resulting_points[line.boundary_points[line.point_2]],
-                    sketch,
-                    "shape_res",
-                )
-                lines.append(new_line)
-            else:
-                new_line = Line(
-                    sketch.resulting_points[line.point_1],
-                    sketch.resulting_points[line.point_2],
-                    sketch,
-                    "shape_res",
-                )
-                lines.append(new_line)
-
-        return lines"""
 
 
     def delete_shape(self):
@@ -575,9 +535,6 @@ class Ray:
         self.sketch = sketch
 
         self.image = self.draw()
-
-    def __del__(self):
-        print("Deleted ray sprite")
 
     def draw(self):
         if self.type == "real":

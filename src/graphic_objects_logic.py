@@ -5,13 +5,8 @@ import graphic_objects_sprites as sprites
 
 
 def lens_toggle_render(sketch, lens):
-
-    print(len(sketch.project.shapes), len(sketch.project.lines), len(sketch.project.points))
-    
     Point.redefine_after_toggling_lens(sketch, lens)
     Line.redefine_after_toggling_lens(sketch)
-    #GraphicLens.render_after_toggling(sketch)
-    #print(len(sketch.project.points), len(sketch.project.resulting_points))
     sketch.render_sketch()
 
 
@@ -55,16 +50,12 @@ class Lens:
         self.type = self.determine_type()
 
     def determine_type(self):
-        if self.focal > 0:
-            print("positive")
-            return "positive"
-        else:
-            print("negative")
-            return "negative"
+        return "positive" if self.focal > 0 else "negative"
 
 
 
 class GraphicLens(Lens):
+    
     lens = None
 
     def __init__(self, sketch, focal, pos, y, space = 30, in_out_factor=1):
@@ -82,22 +73,12 @@ class GraphicLens(Lens):
 
         GraphicLens.lens = self
 
-        print(self.space)
-
-    def __del__(self):
-        print("Deleted the lens")
 
     def determine_relative_zero_point(self):
-        if self.type == "positive":
-            return self.pos + self.space / 2
-        elif self.type == "negative":
-            return self.pos - self.space / 2
+        return self.pos + self.space / 2 if self.type == "positive" else self.pos - self.space / 2
         
     def determine_real_imaginary_boundary(self):
-        if self.type == "positive":
-            return self.pos - self.space / 2
-        elif self.type == "negative":
-            return self.pos + self.space / 2
+        return self.pos - self.space / 2 if self.type == "positive" else self.pos + self.space / 2
         
     def determine_focus_pos(self):
         if self.type == "positive":
@@ -154,22 +135,8 @@ class Point(Object):
             if self.on_axis:
                 self.place_point_on_axis()
 
-            #Point.hide_rays(self, sketch)
-
         self.sprite = sprites.Point(self, sketch, type=type)
-        #self.label_sprite = self.sprite.draw_label()
 
-    
-
-
-        print(f"COORDS: {self.x} x {self.y}")
-
-        print(f"POINTS AMMOUNT: {len(sketch.project.points)}")
-        print(f"RESULTING POINTS AMMOUNT: {len(sketch.project.resulting_points)}")
-
-
-    def __del__(self):
-        print("deleted point")
 
 
     def check_lines(self, in_lines):
@@ -180,7 +147,6 @@ class Point(Object):
         
     def create_label_id(self):
         points_number = len(self.sketch.project.resulting_points)
-        print(f"NUMBER OF POINTS: {points_number}")
         label_letters_number = len(Point.label_letters_list)
         label = ""
         while points_number > label_letters_number:
@@ -188,12 +154,8 @@ class Point(Object):
             points_number -= label_letters_number
         label = label + Point.label_letters_list[points_number]
 
-
         if self.type == "resulting":
             label = label + "'"
-
-        print(Point.label_letters_list[points_number])
-        print(label)
 
         return label
 
@@ -218,12 +180,9 @@ class Point(Object):
         if self.x == lens.real_imaginary_boundary:
             self.on_real_imaginary_boundary = True
         
-        if lens.type == "positive":
-            return self.define_positive_lens_rays(lens)
         
-        elif lens.type == "negative":
-            return self.define_negative_lens_rays(lens)
-            
+        return self.define_positive_lens_rays(lens) if lens.type == "positive" else self.define_negative_lens_rays(lens)
+
 
 
     def define_resulting_point(self, lens):
@@ -243,16 +202,10 @@ class Point(Object):
         self.sketch.project.resulting_points.update({self: self.its_image_point})
 
 
-
-    def print_out(self, event):
-        print(f"COORDS: {self.x} x {self.y}, ID: {self.point_img}")
-
-
     def place_point_on_axis(self):
         if self.its_image_point is not None:
             self.its_image_point.place_point_on_axis()
         self.y = self.sketch.axis.y
-        #self.sprite.redraw_point()
 
 
     def delete_point(self):
@@ -279,7 +232,6 @@ class Point(Object):
         self.its_image_point.delete_point()
         
     def select_point(self, event):
-        print(f"SELECTED, COORDS: {self.x} x {self.y}, POINT'S ID: {self.sprite.image}")
         self.sketch.bind("<ButtonRelease-1><ButtonRelease-1>", self.move_point)
         
 
@@ -290,8 +242,6 @@ class Point(Object):
         self.delete_point()
         self.sketch.project.resulting_points.pop(self)
         self.sketch.project.points.remove(self)
-        print(f"MOVED, COORDS: {event.x} x {event.y}, POINT'S ID: {self.sprite.image}")
-        #shape_var = self.in_shape
         new_point = Point(event.x, event.y, self.sketch, type=self.type, in_lines=self.in_lines, in_shape=self.in_shape)
         self.replace_point_in_lines(new_point)
         new_point.redefine_point_lines()
@@ -323,9 +273,6 @@ class Point(Object):
 
     def render_point(self):
         self.sprite.render_point()
-        """if len(self.sketch.project.points) > 0:
-            for point in self.sketch.project.points:
-                point.sprite.redraw_point()"""
 
     @staticmethod
     def delete_rays(point, sketch):
@@ -337,14 +284,11 @@ class Point(Object):
 
     @staticmethod
     def redefine_after_toggling_lens(sketch, lens):
-        print(f"TYLE LAJNOW JEST: {len(sketch.project.resulting_lines)}")
         for point in sketch.project.resulting_points:
             point.redefine_rays(lens)
             point.redefine_resulting_point(lens)
             if point.on_axis:
                 point.place_point_on_axis()
-
-        #Point.render_points(sketch)
 
     @staticmethod
     def render_points(points):
@@ -362,7 +306,6 @@ class Point(Object):
 
 class Line:
     def __init__(self, point_1: Point, point_2: Point, sketch, type, color, line_boundary_1: Point = None, line_boundary_2: Point = None):
-        #self.points = {"point_1" : point_1, "point_2" : point_2, "boundary_point_1" : None, "boundary_point_1" : None}
         self.point_1 = point_1
         point_1.in_lines.append(self)
         self.point_2 = point_2
@@ -387,14 +330,9 @@ class Line:
         if self.type == "user_defined":
             
             self.linear_function = self.define_linear_function()
-            self.focus_intersection = self.check_focus_intersection()            
-            print(self.focus_intersection)
-            print(self.type)
-            print(self.color)
+            self.focus_intersection = self.check_focus_intersection()         
             self.its_image_line = self.define_resulting_line()
             self.sketch.project.resulting_lines.update({self : self.its_image_line})
-            
-            print(self.linear_function)
 
         
     def define_resulting_line(self):
@@ -405,7 +343,6 @@ class Line:
             resulting_line_boundary_2 = self.sketch.project.resulting_points[self.boundary_points[self.point_2]]
         else:
             resulting_line_boundary_1, resulting_line_boundary_2 = None, None
-            #self.boundary_points[self.point_1], self.boundary_points[self.point_2] = None, None
 
         new_line = Line(resulting_point_1, resulting_point_2, self.sketch, "resulting", "red", resulting_line_boundary_1,
                         resulting_line_boundary_2)
@@ -437,7 +374,6 @@ class Line:
                 self.points_nearby_focus()
                 return True
             else:
-                #self.unmark_boundary_points()
                 return False
         else:
             if (
@@ -447,7 +383,6 @@ class Line:
                 self.points_nearby_focus()
                 return True
             else:
-                #self.unmark_boundary_points()
                 return False
 
     def points_nearby_focus(self):
@@ -474,10 +409,6 @@ class Line:
 
     def unmark_boundary_points(self):
         self.boundary_points = {self.point_1 : None, self.point_2 : None}
-        """if self.boundary_points[self.point_1] is not None:
-            self.boundary_points.update({self.point_1: None})
-        if self.boundary_points[self.point_2] is not None:
-            self.boundary_points.update({self.point_2: None})"""
 
     def delete_boundary_points(self):
         points = list(self.boundary_points.values())
@@ -518,8 +449,6 @@ class Line:
         self.sketch.project.lines.remove(self.its_image_line)
         self.its_image_line.delete_line()
         self.delete_boundary_points()
-        #self.delete_line()
-        #self.sprite = sprites.Line(self.point_1, self.point_2, self.line_boundary_1, self.line_boundary_2, self.sketch, self.type, color=self.color)
         self.focus_intersection = self.check_focus_intersection()
         self.its_image_line = self.define_resulting_line()
         self.sketch.project.resulting_lines.update({self : self.its_image_line})
@@ -531,7 +460,6 @@ class Line:
 
     @staticmethod
     def redefine_after_toggling_lens(sketch):
-        print(f"TYLE LAJNOW JEST: {len(sketch.project.lines)}, {len(sketch.project.resulting_lines)}")
         for line in sketch.project.resulting_lines:
             line.redefine_line_after_toggling_lens()
         ...
@@ -542,19 +470,11 @@ class Line:
             for line in lines:
                 line.render_line()
 
-    """def redefine_after_toggling_lens(sketch, lens):
-        for point in sketch.project.resulting_points:
-            point.redefine_rays(lens)
-            point.redefine_resulting_point(lens)
-
-        Point.render_points(sketch)"""
-
 
 
 class Shape:
 
     def __init__(self, lines: list, sketch, type="user_defined", color="black"):
-        #self.points = points.copy()
         self.lines = lines
         self.sketch = sketch
         self.type = type
@@ -618,8 +538,6 @@ class Ray:
 
         self.sprite = sprites.Ray(x1, y1, x2, y2, self.linear_function, sketch, self.type)
 
-    def __del__(self):
-        print("Deleted ray object")
 
     def linear_function_of_ray(self):
         try:
@@ -652,9 +570,6 @@ class ParallelRay:
         self.sketch = sketch
         self.type = type
         self.elementary_rays = self.define_elementary_rays()
-
-    def __del__(self):
-        print("Deleted Parallel Ray Object")
 
     def define_elementary_rays(self):
         sketch = self.sketch
@@ -748,8 +663,6 @@ class MiddleRay:
         self.type = type
         self.elementary_rays = self.define_elementary_rays()
 
-    def __del__(self):
-        print("Deleted Middle Ray Object")
 
     def define_elementary_rays(self):
         sketch = self.sketch
@@ -865,8 +778,6 @@ class FocalRay:
         self.type = type
         self.elementary_rays = self.define_elementary_rays()
 
-    def __del__(self):
-        print("Deleted Focal Ray Object")
 
     def define_elementary_rays(self):
         sketch = self.sketch
@@ -919,7 +830,6 @@ class FocalRay:
 
     
 
-#   INNA FUNKCJA OSOBNA TO JEST
 def rays_intersection(ray_1: Ray, ray_2: Ray, lens: GraphicLens):
     # IF A_1 == A_2 -> they never intersect
 
@@ -933,10 +843,6 @@ def rays_intersection(ray_1: Ray, ray_2: Ray, lens: GraphicLens):
             [ray_2.linear_function["a"], -1 * ray_2.linear_function["b"]],
         ]
     )
-
-    print(main_matrix)
-    print(x_matrix)
-    print(y_matrix)
 
     x = np.linalg.det(x_matrix) / np.linalg.det(main_matrix)
     y = np.linalg.det(y_matrix) / np.linalg.det(main_matrix)
@@ -953,7 +859,6 @@ def rays_intersection(ray_1: Ray, ray_2: Ray, lens: GraphicLens):
     except OverflowError:
         shared_y = float("inf")
 
-    print(f"MUTUAL COORDS: x = {shared_x}, y = {shared_y}")
 
     if lens.type == "positive":
         x_coord_compensation = lens.x + lens.space/2
@@ -967,10 +872,8 @@ def rays_intersection(ray_1: Ray, ray_2: Ray, lens: GraphicLens):
 
 def render_lens_and_axis(project):
     project.canv.axis.render_axis()
-    project.canv.lens.render_lens()
 
-
-#def render_all_objects(axis: Axis, lens: GraphicLens, lines: list[Line], points: list[Point]):
+    
 def render_all_objects(project):
     project.canv.axis.render_axis()
     project.canv.lens.render_lens()
